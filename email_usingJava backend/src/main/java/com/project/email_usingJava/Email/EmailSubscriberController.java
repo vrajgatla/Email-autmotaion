@@ -1,9 +1,11 @@
 package com.project.email_usingJava.Email;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/subscribers")
@@ -11,26 +13,68 @@ import org.springframework.web.bind.annotation.*;
 public class EmailSubscriberController {
 
     @Autowired
-    private EmailSubscriberService service;
+    private UserSubscriberRepository userSubscriberRepository;
 
     @PostMapping
-    public EmailSubscriber add(@RequestBody EmailSubscriber subscriber) {
-        return service.save(subscriber);
+    public ResponseEntity<?> add(@RequestBody Map<String, String> request, @RequestParam String username) {
+        try {
+            String email = request.get("email");
+            String name = request.get("name");
+            
+            if (email == null || name == null) {
+                return ResponseEntity.badRequest().body("Email and name are required");
+            }
+            
+            // Create user's table if it doesn't exist
+            userSubscriberRepository.createUserTable(username);
+            
+            // Save the subscriber
+            userSubscriberRepository.save(username, email, name);
+            
+            return ResponseEntity.ok("Subscriber added successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to add subscriber: " + e.getMessage());
+        }
     }
 
     @GetMapping
-    public List<EmailSubscriber> list() {
-        return service.getAll();
+    public ResponseEntity<?> list(@RequestParam String username) {
+        try {
+            // Create user's table if it doesn't exist
+            userSubscriberRepository.createUserTable(username);
+            
+            List<Map<String, Object>> subscribers = userSubscriberRepository.findByUsername(username);
+            return ResponseEntity.ok(subscribers);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to fetch subscribers: " + e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
-    public EmailSubscriber update(@PathVariable Long id, @RequestBody EmailSubscriber subscriber) {
-        return service.update(id, subscriber);
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Map<String, String> request, @RequestParam String username) {
+        try {
+            String email = request.get("email");
+            String name = request.get("name");
+            
+            if (email == null || name == null) {
+                return ResponseEntity.badRequest().body("Email and name are required");
+            }
+            
+            userSubscriberRepository.update(username, id, email, name);
+            return ResponseEntity.ok("Subscriber updated successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to update subscriber: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
+    public ResponseEntity<?> delete(@PathVariable Long id, @RequestParam String username) {
+        try {
+            userSubscriberRepository.delete(username, id);
+            return ResponseEntity.ok("Subscriber deleted successfully");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to delete subscriber: " + e.getMessage());
+        }
     }
 }
 

@@ -9,19 +9,22 @@ import VariableInputs from "./VariableInputs";
 import SubjectInput from "./SubjectInput";
 import AttachmentInput from "./AttachmentInput";
 import TemplateSelector from "./TemplateSelector";
+import TemplatePreview from "./TemplatePreview";
+import { getToken } from "../App";
 
 const EmailSenderForm = () => {
   const [formData, setFormData] = useState({
     to: "",
     subject: "",
     body: "",
-    templateName: "template1",
+    templateName: "",
   });
-  const [variables, setVariables] = useState([{ key: "", value: "" }]);
+  const [variables, setVariables] = useState([]);
   const [attachments, setAttachments] = useState([]);
   const [emailType, setEmailType] = useState("simple");
   const [sendToAll, setSendToAll] = useState(false);
   const [status, setStatus] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
 
   const backendUrl = "http://localhost:8080/api/emails";
 
@@ -29,10 +32,28 @@ const EmailSenderForm = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleTemplateChange = (e) => {
+    handleInputChange(e);
+    // The TemplateSelector will handle setting selectedTemplate
+  };
+
+  const getAuthHeaders = () => {
+    const token = getToken();
+    return {
+      Authorization: `Bearer ${token}`,
+    };
+  };
+
   const sendEmail = async () => {
     setStatus("Sending...");
     try {
+      const token = getToken();
+      console.log("Token from localStorage:", token);
+      console.log("Auth headers:", getAuthHeaders());
+      
       const endpointSuffix = sendToAll ? "-to-all" : "";
+      const headers = getAuthHeaders();
+      
       if (emailType === "simple") {
         await axios.post(`${backendUrl}/send-simple${endpointSuffix}`, null, {
           params: sendToAll
@@ -45,6 +66,7 @@ const EmailSenderForm = () => {
               subject: formData.subject,
               body: formData.body,
             },
+          headers,
         });
       } else if (emailType === "attachment") {
         const form = new FormData();
@@ -54,7 +76,10 @@ const EmailSenderForm = () => {
         if (!sendToAll) form.append("to", formData.to);
 
         await axios.post(`${backendUrl}/send-attachment${endpointSuffix}`, form, {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { 
+            ...headers,
+            "Content-Type": "multipart/form-data" 
+          },
         });
       } else if (emailType === "template") {
         const varsObj = {};
@@ -73,13 +98,17 @@ const EmailSenderForm = () => {
               subject: formData.subject,
               templateName: formData.templateName,
             },
+          headers,
         });
       }
 
       setStatus("Email sent successfully!");
     } catch (error) {
-      console.error(error);
-      setStatus("Error sending email.");
+      console.error("Error sending email:", error);
+      console.error("Error response:", error.response);
+      console.error("Error status:", error.response?.status);
+      console.error("Error data:", error.response?.data);
+      setStatus("Error sending email: " + (error.response?.data || error.message));
     }
   };
 
@@ -106,10 +135,19 @@ const EmailSenderForm = () => {
       )}
       {emailType === "template" && (
         <>
-          <TemplateSelector value={formData.templateName} onChange={handleInputChange} />
+          <TemplateSelector 
+            value={formData.templateName} 
+            onChange={handleTemplateChange}
+            onTemplateSelect={setSelectedTemplate}
+          />
           <VariableInputs
             variables={variables}
             setVariables={setVariables}
+            selectedTemplate={selectedTemplate}
+          />
+          <TemplatePreview
+            template={selectedTemplate}
+            variables={variables}
           />
         </>
       )}
@@ -119,7 +157,11 @@ const EmailSenderForm = () => {
       >
         Send Email
       </button>
-      {status && <p className="mt-4 font-semibold text-green-700">{status}</p>}
+      {status && (
+        <p className={`mt-4 font-semibold ${status.includes('Error') ? 'text-red-700' : 'text-green-700'}`}>
+          {status}
+        </p>
+      )}
     </div>
   );
 };

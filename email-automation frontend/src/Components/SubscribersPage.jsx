@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { getToken } from "../App";
 
 const SubscribersPage = () => {
   const [subscribers, setSubscribers] = useState([]);
   const [form, setForm] = useState({ name: "", email: "" });
   const [status, setStatus] = useState("");
+  const username = localStorage.getItem("username");
 
   const backendUrl = "http://localhost:8080/api/subscribers";
+
+  const getAuthHeaders = () => {
+    const token = getToken();
+    return {
+      Authorization: `Bearer ${token}`,
+    };
+  };
 
   // Fetch subscribers from backend
   useEffect(() => {
@@ -15,10 +24,20 @@ const SubscribersPage = () => {
 
   const fetchSubscribers = async () => {
     try {
-      const res = await axios.get(backendUrl);
+      const token = getToken();
+      console.log("Token from localStorage:", token);
+      console.log("Username from localStorage:", username);
+      console.log("Auth headers:", getAuthHeaders());
+      
+      const res = await axios.get(`${backendUrl}?username=${username}`, {
+        headers: getAuthHeaders(),
+      });
       setSubscribers(res.data);
     } catch (error) {
       console.error("Failed to fetch subscribers", error);
+      console.error("Error response:", error.response);
+      console.error("Error status:", error.response?.status);
+      console.error("Error data:", error.response?.data);
     }
   };
 
@@ -31,7 +50,9 @@ const SubscribersPage = () => {
       return;
     }
     try {
-      await axios.post(backendUrl, form);
+      await axios.post(`${backendUrl}?username=${username}`, form, {
+        headers: getAuthHeaders(),
+      });
       setForm({ name: "", email: "" });
       setStatus("Subscriber added!");
       fetchSubscribers();
@@ -42,7 +63,9 @@ const SubscribersPage = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${backendUrl}/${id}`);
+      await axios.delete(`${backendUrl}/${id}?username=${username}`, {
+        headers: getAuthHeaders(),
+      });
       fetchSubscribers();
     } catch (error) {
       setStatus("Failed to delete subscriber");
@@ -51,7 +74,7 @@ const SubscribersPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-      <h1 className="text-3xl font-bold mb-6">Subscribers</h1>
+      <h1 className="text-3xl font-bold mb-6">My Subscribers</h1>
 
       <form onSubmit={handleSubmit} className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <input

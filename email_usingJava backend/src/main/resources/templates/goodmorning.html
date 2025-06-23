@@ -17,21 +17,27 @@
                 </p>
                 <img src="https://cdn.pixabay.com/photo/2017/07/31/11/21/thank-you-2550588_1280.jpg" alt="Thank You" style="max-width: 100%; border-radius: 8px; margin-top: 20px;" />
 
-                <h2 style="margin-top: 30px; color: #2c3e50;">Here’s what’s new for you:</h2>
+                <h2 style="margin-top: 30px; color: #2c3e50;">Here's what's new for you:</h2>
                 <ul style="text-align: left; padding-left: 20px; color: #444; font-size: 15px;">
                   <li>🚀 New features have been added to your dashboard.</li>
                   <li>📈 Access personalized insights to track your activity.</li>
                   <li>💬 Connect with our community through the new discussion portal.</li>
-                  <li>🎁 Special offers just for loyal users like you — don’t miss out!</li>
+                  <li>🎁 Special offers just for loyal users like you — don't miss out!</li>
                 </ul>
 
-                <a href="https://yourcompany.com/dashboard" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #4CAF50; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Explore Now</a>
+                <a th:href="${website}" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background-color: #4CAF50; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Explore Now</a>
               </td>
             </tr>
             <tr>
               <td align="center" style="padding-top: 30px;">
                 <p style="font-size: 14px; color: #999;">— The Team at Your Company</p>
-                <p style="font-size: 13px; color: #bbb;">Need help? Contact us at <a href="mailto:support@yourcompany.com" style="color: #4CAF50;">support@yourcompany.com</a></p>
+                <p style="font-size: 13px; color: #bbb;">Need help? Contact us at 
+                  <a th:href="'mailto:' + (${supportEmail} != null ? ${supportEmail} : 'support@yourcompany.com')"
+                     style="color: #4CAF50;"
+                     th:text="${supportEmail} != null ? ${supportEmail} : 'support@yourcompany.com'">
+                    support@yourcompany.com
+                  </a>
+                </p>
               </td>
             </tr>
           </table>
