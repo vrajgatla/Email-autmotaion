@@ -230,8 +230,6 @@ For support and questions:
 - Check the documentation
 - Review the code comments
 
----
-
 **Note:**
 - Make sure to configure your Gmail app password correctly and test the email functionality before using in production.
 - Use only the `email_usingJava_backend` folder for backend development. The folder `email_usingJava backend` (with a space) is deprecated and can be deleted.
