@@ -7,13 +7,15 @@ A full-stack email automation system with dynamic template support, built with S
 ### 🔧 Core Features
 - **User Authentication & Authorization** - JWT-based secure authentication
 - **Email Sending** - Support for simple emails, attachments, and dynamic templates
-- **Subscriber Management** - Add and manage email subscribers
+- **Subscriber Management** - Add and manage email subscribers, import via CSV
 - **Template System** - Dynamic HTML email templates with variable substitution
+- **Bulk Email Sending** - Parallel/async sending for all email types
+- **Attachment Support** - Attach files to both simple and template emails
 
 ### 📧 Email Types
 1. **Simple Email** - Basic text emails
 2. **Email with Attachments** - Send files along with emails
-3. **Template Email** - Dynamic HTML templates with variable substitution
+3. **Template Email** - Dynamic HTML templates with variable substitution and optional attachments
 
 ### 🎨 Dynamic Templates
 The system includes several pre-built templates:
@@ -48,23 +50,27 @@ The system includes several pre-built templates:
 ### Prerequisites
 - Java 17+
 - Node.js 16+
-- MySQL 8.0+
+- MySQL 8.0+ (or TiDB Cloud)
 - Gmail account with App Password
 
 ### Backend Setup
 1. Navigate to the backend directory:
    ```bash
-   cd "email_usingJava backend"
+   cd email_usingJava_backend
    ```
+   > **Note:** If you see a folder named `email_usingJava backend` (with a space), it is deprecated/unused. Use only `email_usingJava_backend`.
 
-2. Configure database in `src/main/resources/application.properties`:
-   ```properties
-   spring.datasource.url=jdbc:mysql://localhost:3306/email_automation
-   spring.datasource.username=your_username
-   spring.datasource.password=your_password
-   ```
+2. Configure environment variables:
+   - Copy `.evn example` to `.env` and fill in your credentials:
+     ```bash
+     cp .evn\ example .env
+     # Edit .env with your DB and email credentials
+     ```
+   - Or set variables directly in your environment.
 
-3. Run the Spring Boot application:
+3. (Optional) Configure `application.properties` for additional settings.
+
+4. Run the Spring Boot application:
    ```bash
    ./mvnw spring-boot:run
    ```
@@ -72,7 +78,7 @@ The system includes several pre-built templates:
 ### Frontend Setup
 1. Navigate to the frontend directory:
    ```bash
-   cd "email-automation frontend"
+   cd email-automation_frontend
    ```
 
 2. Install dependencies:
@@ -95,8 +101,15 @@ The system includes several pre-built templates:
    - Generate a new app password for "Mail"
 3. Use the 16-character app password in the application
 
+### Environment Variables
+- All sensitive configuration is managed via `.env` (see `.evn example` for required keys):
+  - Database: `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`
+  - Email: `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USER`, `EMAIL_PASS`
+  - Other: `SERVER_PORT`, `THYMELEAF_PREFIX`, `THYMELEAF_SUFFIX`
+- `.env` is excluded from version control via `.gitignore`.
+
 ### Template Customization
-Templates are located in `email_usingJava backend/src/main/resources/templates/`:
+Templates are located in `email_usingJava_backend/src/main/resources/templates/`:
 - `welcome.html` - Welcome email template
 - `goodmorning.html` - Morning greeting template
 - `thankyou.html` - Thank you email template
@@ -112,7 +125,8 @@ Templates are located in `email_usingJava backend/src/main/resources/templates/`
 ### 2. Adding Subscribers
 - Navigate to the Subscribers page
 - Add email addresses of your subscribers
-- Manage your subscriber list
+- Import subscribers in bulk via CSV
+- Manage your subscriber list (duplicates are checked and prevented)
 
 ### 3. Sending Emails
 
@@ -132,37 +146,15 @@ Templates are located in `email_usingJava backend/src/main/resources/templates/`
 1. Select "Template Email" type
 2. Choose a template from the dropdown
 3. Fill in the required variables
-4. Preview the email (optional)
-5. Click "Send Email"
+4. (Optional) Upload attachments
+5. Preview the email (optional)
+6. Click "Send Email"
 
-### 4. Template Variables
-Each template has specific variables that need to be filled:
+### 4. Bulk Email Summary
+- After sending to all subscribers, a summary is shown: total, success, failed, failedEmails, and time taken.
 
-#### Welcome Template
-- `name` - Recipient's name
-- `company` - Your company name
-- `website` - Your website URL
-
-#### Newsletter Template
-- `name` - Recipient's name
-- `company` - Your company name
-- `date` - Newsletter date
-- `highlight1`, `highlight2`, `highlight3` - Main highlights
-- `newsContent` - Main news content
-- `proTip` - Pro tip for users
-- `website` - Your website URL
-- `unsubscribeLink` - Unsubscribe link
-
-#### Promotion Template
-- `name` - Recipient's name
-- `company` - Your company name
-- `discountPercent` - Discount percentage
-- `offerDescription` - Description of the offer
-- `promoCode` - Promotional code
-- `feature1`, `feature2`, `feature3` - Key features
-- `ctaLink` - Call-to-action link
-- `expiryDate` - Offer expiry date
-- `supportEmail` - Support email address
+### 5. Template Variables
+Each template has specific variables that need to be filled (see above).
 
 ## 🛠️ Technical Details
 
@@ -173,12 +165,15 @@ Each template has specific variables that need to be filled:
 - **Thymeleaf** - Template engine for email processing
 - **Jakarta Mail** - Email sending functionality
 - **JWT** - Token-based authentication
+- **dotenv-java** - Loads environment variables from `.env`
+- **Async/CompletableFuture** - Parallel bulk email sending
 
 ### Frontend Architecture
 - **React 18** - UI framework
 - **Vite** - Build tool
 - **Tailwind CSS** - Styling
 - **Axios** - HTTP client
+- **React Router** - Routing
 
 ### Database Schema
 - **users** - User accounts and Gmail credentials
@@ -191,14 +186,23 @@ Each template has specific variables that need to be filled:
 - CORS configuration
 - Input validation
 - SQL injection prevention
+- Sensitive config in `.env` (not in version control)
 
 ## 📧 Email Features
 - HTML email support
 - Variable substitution
-- Attachment support
-- Bulk email sending
-- Template preview
-- Error handling
+- Attachment support (simple & template emails)
+- Bulk email sending (parallel/async)
+- Template preview & gallery
+- Error handling and user feedback
+- CSV import for subscribers
+
+## 🖥️ UI/UX Improvements
+- Modern homepage with hero, features, and how-it-works sections
+- Navbar with Home, Send Email, Subscribers, Templates
+- Send Email page with template selection, variable input, and gallery preview
+- Bulk send summary and error feedback
+- All debug/console output minimized for cleaner experience
 
 ## 🎯 Future Enhancements
 - Email scheduling
@@ -228,4 +232,6 @@ For support and questions:
 
 ---
 
-**Note**: Make sure to configure your Gmail app password correctly and test the email functionality before using in production.
+**Note:**
+- Make sure to configure your Gmail app password correctly and test the email functionality before using in production.
+- Use only the `email_usingJava_backend` folder for backend development. The folder `email_usingJava backend` (with a space) is deprecated and can be deleted.
