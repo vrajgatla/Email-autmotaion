@@ -8,6 +8,8 @@ const TemplateSelector = ({ value, onChange, onTemplateSelect }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const API_URL = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
     fetchTemplates();
   }, []);
@@ -31,7 +33,7 @@ const TemplateSelector = ({ value, onChange, onTemplateSelect }) => {
     try {
       setLoading(true);
       const token = getToken();
-      const response = await axios.get('http://localhost:8080/api/emails/templates', {
+      const response = await axios.get(`${API_URL}/emails/templates`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -129,9 +131,9 @@ const TemplateSelector = ({ value, onChange, onTemplateSelect }) => {
       )}
 
       {/* Template Gallery */}
-      <div className="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-        <h2 className="text-2xl font-bold mb-4">Available Templates</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="max-w-4xl mx-auto bg-white p-4 sm:p-6 rounded shadow">
+        <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Available Templates</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
           {templates.map((template) => (
             <div key={template.name} className="border rounded p-4 hover:shadow-md transition-shadow">
               <h3 className="font-semibold mb-2">{template.displayName}</h3>

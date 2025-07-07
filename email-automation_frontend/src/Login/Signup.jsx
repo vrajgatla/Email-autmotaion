@@ -8,11 +8,12 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:8080/api/auth/signup", {
+      const res = await axios.post(`${API_URL}/auth/signup`, {
         username: email,
         email,
         password,
@@ -25,8 +26,8 @@ const Signup = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 bg-white p-8 rounded shadow">
-      <h2 className="text-2xl font-bold mb-6">Sign Up</h2>
+    <div className="max-w-md mx-auto mt-6 sm:mt-10 bg-white p-4 sm:p-8 rounded shadow">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Sign Up</h2>
       {message && <p className="mb-4 text-blue-600">{message}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <input

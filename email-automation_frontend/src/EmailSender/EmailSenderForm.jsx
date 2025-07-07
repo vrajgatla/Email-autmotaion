@@ -12,6 +12,8 @@ import TemplateSelector from "./TemplateSelector";
 import TemplatePreview from "./TemplatePreview";
 import { getToken } from "../App";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const EmailSenderForm = () => {
   const [formData, setFormData] = useState({
     to: "",
@@ -27,7 +29,7 @@ const EmailSenderForm = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [bulkSummary, setBulkSummary] = useState(null);
 
-  const backendUrl = "http://localhost:8080/api/emails";
+  const backendUrl = `${API_URL}/emails`;
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -181,7 +183,7 @@ const EmailSenderForm = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+    <form onSubmit={sendEmail} className="space-y-3 sm:space-y-4 max-w-2xl mx-auto p-3 sm:p-6 bg-white rounded shadow">
       <h1 className="text-3xl font-bold mb-6">Send Email</h1>
 
       <EmailTypeSelector
@@ -220,7 +222,7 @@ const EmailSenderForm = () => {
         </>
       )}
       <button
-        onClick={sendEmail}
+        type="submit"
         className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
       >
         Send Email
@@ -249,7 +251,7 @@ const EmailSenderForm = () => {
           )}
         </div>
       )}
-    </div>
+    </form>
   );
 };
 

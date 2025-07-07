@@ -10,7 +10,8 @@ const SubscribersPage = () => {
   const [csvFile, setCsvFile] = useState(null);
   const [csvStatus, setCsvStatus] = useState("");
 
-  const backendUrl = "http://localhost:8080/api/subscribers";
+  const API_URL = import.meta.env.VITE_API_URL;
+  const backendUrl = `${API_URL}/subscribers`;
 
   const getAuthHeaders = () => {
     const token = getToken();
@@ -104,10 +105,10 @@ const SubscribersPage = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-white p-6 rounded shadow">
-      <h1 className="text-3xl font-bold mb-6">My Subscribers</h1>
+    <div className="max-w-4xl mx-auto bg-white p-4 sm:p-6 rounded shadow">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">My Subscribers</h1>
 
-      <form onSubmit={handleSubmit} className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+      <form onSubmit={handleSubmit} className="mb-4 sm:mb-6 grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4">
         <input
           type="text"
           name="name"
@@ -132,8 +133,8 @@ const SubscribersPage = () => {
         </button>
       </form>
 
-      <div className="mb-6">
-        <label className="block font-semibold mb-2">Import Subscribers from CSV:</label>
+      <div className="mb-4 sm:mb-6">
+        <label className="block font-semibold mb-1 sm:mb-2">Import Subscribers from CSV:</label>
         <div className="flex flex-col md:flex-row gap-2 items-start md:items-center">
           <input
             type="file"
@@ -149,43 +150,45 @@ const SubscribersPage = () => {
             Upload CSV
           </button>
         </div>
-        {csvStatus && <p className="mt-2 text-sm font-semibold">{csvStatus}</p>}
       </div>
 
-      {status && <p className="mb-4 font-semibold">{status}</p>}
+      {csvStatus && <p className="mt-2 text-sm font-semibold">{csvStatus}</p>}
+      {status && <p className="mb-2 sm:mb-4 font-semibold">{status}</p>}
 
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-orange-100">
-            <th className="border border-gray-300 px-4 py-2">Name</th>
-            <th className="border border-gray-300 px-4 py-2">Email</th>
-            <th className="border border-gray-300 px-4 py-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {subscribers.map((sub) => (
-            <tr key={sub.id}>
-              <td className="border border-gray-300 px-4 py-2">{sub.name}</td>
-              <td className="border border-gray-300 px-4 py-2">{sub.email}</td>
-              <td className="border border-gray-300 px-4 py-2 text-center">
-                <button
-                  onClick={() => handleDelete(sub.id)}
-                  className="text-red-600 hover:underline"
-                >
-                  Delete
-                </button>
-              </td>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[500px] border-collapse border border-gray-300 text-xs sm:text-sm">
+          <thead>
+            <tr className="bg-orange-100">
+              <th className="border border-gray-300 px-4 py-2">Name</th>
+              <th className="border border-gray-300 px-4 py-2">Email</th>
+              <th className="border border-gray-300 px-4 py-2">Actions</th>
             </tr>
-          ))}
-          {subscribers.length === 0 && (
-            <tr>
-              <td colSpan={3} className="text-center py-4">
-                No subscribers found.
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {subscribers.map((sub) => (
+              <tr key={sub.id}>
+                <td className="border border-gray-300 px-4 py-2">{sub.name}</td>
+                <td className="border border-gray-300 px-4 py-2">{sub.email}</td>
+                <td className="border border-gray-300 px-4 py-2 text-center">
+                  <button
+                    onClick={() => handleDelete(sub.id)}
+                    className="text-red-600 hover:underline"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {subscribers.length === 0 && (
+              <tr>
+                <td colSpan={3} className="text-center py-4">
+                  No subscribers found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

@@ -3,6 +3,8 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../App";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Profile = () => {
   const username = localStorage.getItem("username") || "";
   const email = localStorage.getItem("email") || "";
@@ -20,7 +22,7 @@ const Profile = () => {
 
   const fetchCurrentAppPassword = async () => {
     try {
-      const res = await axios.get(`http://localhost:8080/api/auth/app-password?username=${username}`);
+      const res = await axios.get(`${API_URL}/auth/app-password?username=${username}`);
       setCurrentAppPassword(res.data.appPassword);
       setLoading(false);
     } catch (err) {
@@ -37,7 +39,7 @@ const Profile = () => {
     }
     
     try {
-      const res = await axios.post("http://localhost:8080/api/auth/update-app-password", {
+      const res = await axios.post(`${API_URL}/auth/update-app-password`, {
         username,
         appPassword: newAppPassword,
       });
@@ -64,8 +66,8 @@ const Profile = () => {
   }
 
   return (
-    <div className="max-w-md mx-auto mt-10 bg-white p-8 rounded shadow">
-      <h2 className="text-2xl font-bold mb-6">Profile</h2>
+    <div className="max-w-md mx-auto mt-6 sm:mt-10 bg-white p-4 sm:p-8 rounded shadow">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Profile</h2>
       
       <div className="mb-6 space-y-3">
         <div className="flex justify-between">

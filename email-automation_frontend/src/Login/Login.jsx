@@ -8,6 +8,7 @@ const Login = ({ saveToken }) => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,7 +16,7 @@ const Login = ({ saveToken }) => {
     
     try {
       // console.log("Attempting login with email:", email);
-      const res = await axios.post("http://localhost:8080/api/auth/login", {
+      const res = await axios.post(`${API_URL}/auth/login`, {
         username: email,
         password,
       });
@@ -55,8 +56,8 @@ const Login = ({ saveToken }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 bg-white p-8 rounded shadow">
-      <h2 className="text-2xl font-bold mb-6">Login</h2>
+    <div className="max-w-md mx-auto mt-6 sm:mt-10 bg-white p-4 sm:p-8 rounded shadow">
+      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Login</h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
       <form onSubmit={handleSubmit} className="space-y-4">
         <input

@@ -3,6 +3,8 @@ import TemplateSelector from "../EmailSender/TemplateSelector";
 import { getToken } from "../App";
 import axios from "axios";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const EmailTemplates = () => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -27,7 +29,7 @@ const EmailTemplates = () => {
     try {
       setLoading(true);
       const token = getToken();
-      const response = await axios.get('http://localhost:8080/api/emails/templates', {
+      const response = await axios.get(`${API_URL}/emails/templates`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
