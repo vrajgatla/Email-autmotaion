@@ -1,0 +1,17 @@
+# --- Database Configuration ---
+DB_HOST=gateway01.us-west-2.prod.aws.tidbcloud.com
+DB_PORT=4000
+DB_NAME=test
+DB_USER=QNq3sDkSHER5bsi.root
+DB_PASS=your_tidb_password_here
+
+# --- Email Configuration ---
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_email_app_password
+
+# --- Other Configuration ---
+SERVER_PORT=8080
+THYMELEAF_PREFIX=classpath:/templates/
+THYMELEAF_SUFFIX=.html
