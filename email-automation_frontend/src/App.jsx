@@ -7,8 +7,7 @@ import SubscribersPage from "./Components/SubscribersPage";
 import EmailSenderForm from "./EmailSender/EmailSenderForm";
 import TemplateSelector from "./EmailSender/TemplateSelector";
 import Profile from "./Login/Profile";
-import Navbar from "./components/Navbar";
-
+import Navbar from "./Components/Navbar";
 const TOKEN_KEY = "auth_token";
 const EXPIRY_KEY = "token_expiry";
 
