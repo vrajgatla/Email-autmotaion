@@ -14,12 +14,10 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
             "http://localhost:5173", // local dev
-<<<<<<< HEAD
-            "https://full-stack-email-autmotaion.vercel.app/" // <-- replace with your real production domain
 
-=======
-            "https://fullstack-email-autmotaion-a02x.onrender.com" // <-- replace with your real production domain
->>>>>>> 442518a6b2ca735a87f0cd1c74c0c84c5c84d3ce
+            "https://full-stack-email-autmotaion.vercel.app" // <-- replace with your real production domain
+
+
         ));
         config.setAllowCredentials(true);
         config.addAllowedHeader("*");
