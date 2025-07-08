@@ -1,4 +1,4 @@
-package com.project.email_usingJava.EmailSender;
+package com.project.email_usingJava.controller;
 
 import java.util.List;
 import java.util.Map;
@@ -20,16 +20,23 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.project.email_usingJava.Email.UserSubscriberRepository;
-import com.project.email_usingJava.User.UserModel;
-import com.project.email_usingJava.User.UserRepository;
+import com.project.email_usingJava.model.UserModel;
+import com.project.email_usingJava.repository.UserSubscriberRepository;
+import com.project.email_usingJava.repository.UserRepository;
+import com.project.email_usingJava.service.EmailService;
+import com.project.email_usingJava.service.TemplateService;
+import com.project.email_usingJava.ServiceImpl.EmailServiceImpl;
 
 import jakarta.mail.MessagingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/emails")
 @CrossOrigin("*")
 public class EmailSenderController {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailSenderController.class);
 
     @Autowired
     private EmailService emailService;

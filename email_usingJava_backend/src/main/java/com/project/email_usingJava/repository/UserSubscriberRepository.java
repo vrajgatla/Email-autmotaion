@@ -1,9 +1,10 @@
-package com.project.email_usingJava.Email;
+package com.project.email_usingJava.repository;
 
-import com.project.email_usingJava.Email.DynamicTableService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+
+import com.project.email_usingJava.service.DynamicTableService;
 
 import java.util.List;
 import java.util.Map;

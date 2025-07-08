@@ -39,7 +39,6 @@ const TemplateSelector = ({ value, onChange, onTemplateSelect }) => {
       setTemplates(response.data);
       setError(null);
     } catch (err) {
-      // console.error('Error fetching templates:', err);
       setError('Failed to load templates');
     } finally {
       setLoading(false);

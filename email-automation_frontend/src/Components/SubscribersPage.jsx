@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import api from '../api';
-import { getToken } from "../App";
 
 const SubscribersPage = () => {
   const [subscribers, setSubscribers] = useState([]);
@@ -9,13 +8,7 @@ const SubscribersPage = () => {
   const username = localStorage.getItem("username");
   const [csvFile, setCsvFile] = useState(null);
   const [csvStatus, setCsvStatus] = useState("");
-
-  const getAuthHeaders = () => {
-    const token = getToken();
-    return {
-      Authorization: `Bearer ${token}`,
-    };
-  };
+  const [error, setError] = useState("");
 
   // Fetch subscribers from backend
   useEffect(() => {
@@ -24,18 +17,10 @@ const SubscribersPage = () => {
 
   const fetchSubscribers = async () => {
     try {
-      const token = getToken();
-      // console.log("Token from localStorage:", token);
-      // console.log("Username from localStorage:", username);
-      // console.log("Auth headers:", getAuthHeaders());
-      
       const res = await api.get(`/api/subscribers`, { params: { username } });
       setSubscribers(res.data);
     } catch (error) {
-      // console.error("Failed to fetch subscribers", error);
-      // console.error("Error response:", error.response);
-      // console.error("Error status:", error.response?.status);
-      // console.error("Error data:", error.response?.data);
+      setError("Failed to fetch subscribers.");
     }
   };
 
@@ -80,7 +65,7 @@ const SubscribersPage = () => {
     try {
       const formData = new FormData();
       formData.append("file", csvFile);
-      const res = await api.post(`/api/subscribers/import-csv`, formData, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
+      const res = await api.post(`/api/subscribers/import-csv`, formData, { headers: { "Content-Type": "multipart/form-data" } });
       setCsvStatus(res.data);
       setCsvFile(null);
       fetchSubscribers();

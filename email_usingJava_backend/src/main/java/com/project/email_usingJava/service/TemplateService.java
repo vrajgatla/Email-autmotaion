@@ -1,4 +1,4 @@
-package com.project.email_usingJava.EmailSender;
+package com.project.email_usingJava.service;
 
 import org.springframework.stereotype.Service;
 import java.util.*;

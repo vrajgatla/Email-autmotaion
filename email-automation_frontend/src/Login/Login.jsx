@@ -14,13 +14,18 @@ const Login = ({ saveToken }) => {
     setError("");
     
     try {
+      // Uncomment and add debug logs in the login handler
+      // Example:
       // console.log("Attempting login with email:", email);
       const res = await api.post('/api/auth/login', {
         username: email,
         password,
       });
       
+      // Uncomment and add debug logs in the login handler
+      // After successful login:
       // console.log("Login response:", res.data);
+      // console.log("Token saved to localStorage:", localStorage.getItem('auth_token'));
       
       if (res.data.token && res.data.username && res.data.email) {
         saveToken(res.data.token);
@@ -31,26 +36,15 @@ const Login = ({ saveToken }) => {
         setError("Invalid response from server");
       }
     } catch (err) {
+      // Uncomment and add debug logs in the login handler
       // console.error("Login error:", err);
-      if (err.response) {
-        // console.error("Error response:", err.response.data);
-        // console.error("Error status:", err.response.status);
-        // console.error("Error headers:", err.response.headers);
-        // Handle different types of error responses
-        let errorMessage = "Login failed";
-        if (typeof err.response.data === 'string') {
-          errorMessage = err.response.data;
-        } else if (err.response.data && typeof err.response.data === 'object') {
-          errorMessage = err.response.data.message || err.response.data.error || JSON.stringify(err.response.data);
-        }
-        setError(errorMessage);
-      } else if (err.request) {
-        // console.error("No response received");
-        setError("No response from server. Please check if backend is running.");
-      } else {
-        // console.error("Error setting up request:", err.message);
-        setError("Error connecting to server");
+      let errorMessage = "Login failed. Please check your credentials and try again.";
+      if (err.response && err.response.status === 401) {
+        errorMessage = "Invalid username or password.";
+      } else if (err.message === "Network Error") {
+        errorMessage = "Cannot connect to server. Please try again later.";
       }
+      setError(errorMessage);
     }
   };
 

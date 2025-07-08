@@ -1,9 +1,11 @@
-package com.project.email_usingJava.EmailSender;
+package com.project.email_usingJava.service;
 //EmailService.java
 
 import java.util.Map;
 import java.util.List;
-import org.springframework.web.multipart.MultipartFile;
+
+import com.project.email_usingJava.ServiceImpl.EmailServiceImpl;
+
 import jakarta.mail.MessagingException;
 
 public interface EmailService {

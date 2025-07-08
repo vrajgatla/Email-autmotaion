@@ -1,4 +1,4 @@
-package com.project.email_usingJava.User;
+package com.project.email_usingJava.model;
 
 import jakarta.persistence.*;
 

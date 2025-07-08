@@ -1,32 +1,35 @@
-package com.project.email_usingJava.User;
-
+package com.project.email_usingJava.ServiceImpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.project.email_usingJava.repository.UserRepository;
+import com.project.email_usingJava.service.UserService;
+import com.project.email_usingJava.model.UserModel;
 
 @Service
 public class UserServiceImpl implements UserService {
-
-    @Autowired private UserRepository userRepo;
-    @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public String signup(UserModel user) {
-        if (userRepo.existsByUsername(user.getUsername())) {
+        if (userRepository.existsByUsername(user.getUsername())) {
             return "Username already taken!";
         }
-        if (userRepo.existsByEmail(user.getEmail())) {
+        if (userRepository.existsByEmail(user.getEmail())) {
             return "Email already registered!";
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepo.save(user);
+        userRepository.save(user);
         return "User registered successfully!";
     }
 
     @Override
     public UserModel getUserByUsername(String username) {
-        return userRepo.findByUsername(username).orElse(null);
+        return userRepository.findByUsername(username).orElse(null);
     }
 }
 

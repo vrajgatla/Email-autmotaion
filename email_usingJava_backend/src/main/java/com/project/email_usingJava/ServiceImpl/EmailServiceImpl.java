@@ -1,13 +1,14 @@
-package com.project.email_usingJava.EmailSender;
+package com.project.email_usingJava.ServiceImpl;
 
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+
+import com.project.email_usingJava.service.EmailService;
+
 import org.springframework.scheduling.annotation.Async;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.List;

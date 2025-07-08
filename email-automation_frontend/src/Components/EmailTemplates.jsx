@@ -34,7 +34,7 @@ const EmailTemplates = () => {
       });
       setTemplates(response.data);
       setError(null);
-    } catch (err) {
+    } catch (error) {
       setError('Failed to load templates');
     } finally {
       setLoading(false);

@@ -169,11 +169,7 @@ const EmailSenderForm = () => {
 
       setStatus("Email sent successfully!");
     } catch (error) {
-      // console.error("Error sending email:", error);
-      // console.error("Error response:", error.response);
-      // console.error("Error status:", error.response?.status);
-      // console.error("Error data:", error.response?.data);
-      setStatus("Error sending email: " + (error.response?.data || error.message));
+      setStatus("Error sending email. Please try again.");
       setBulkSummary(null);
     }
   };

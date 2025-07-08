@@ -1,5 +1,6 @@
-package com.project.email_usingJava.Email;
+package com.project.email_usingJava.controller;
 
+import com.project.email_usingJava.repository.UserSubscriberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,11 +14,16 @@ import java.util.Set;
 
 import java.util.List;
 import java.util.Map;
+import org.springframework.http.HttpHeaders;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/subscribers")
 @CrossOrigin("*")
 public class EmailSubscriberController {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailSubscriberController.class);
 
     @Autowired
     private UserSubscriberRepository userSubscriberRepository;
@@ -45,12 +51,15 @@ public class EmailSubscriberController {
             
             return ResponseEntity.ok("Subscriber added successfully");
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body("Failed to add subscriber: " + e.getMessage());
         }
     }
 
     @GetMapping
-    public ResponseEntity<?> list(@RequestParam String username) {
+    public ResponseEntity<?> list(@RequestParam String username, @RequestHeader Map<String, String> headers) {
+        System.out.println("[DEBUG] Received GET /api/subscribers for username: " + username);
+        System.out.println("[DEBUG] Headers: " + headers);
         try {
             // Create user's table if it doesn't exist
             userSubscriberRepository.createUserTable(username);
@@ -58,7 +67,8 @@ public class EmailSubscriberController {
             List<Map<String, Object>> subscribers = userSubscriberRepository.findByUsername(username);
             return ResponseEntity.ok(subscribers);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Failed to fetch subscribers: " + e.getMessage());
+            logger.error("Error in getSubscribers: ", e);
+            throw e;
         }
     }
 
@@ -75,6 +85,7 @@ public class EmailSubscriberController {
             userSubscriberRepository.update(username, id, email, name);
             return ResponseEntity.ok("Subscriber updated successfully");
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body("Failed to update subscriber: " + e.getMessage());
         }
     }
@@ -85,6 +96,7 @@ public class EmailSubscriberController {
             userSubscriberRepository.delete(username, id);
             return ResponseEntity.ok("Subscriber deleted successfully");
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body("Failed to delete subscriber: " + e.getMessage());
         }
     }
@@ -135,12 +147,14 @@ public class EmailSubscriberController {
                     addedEmails.add(email.toLowerCase());
                     added++;
                 } catch (Exception e) {
+                    e.printStackTrace();
                     skippedEmails.add(email + " (error)");
                     skipped++;
                 }
             }
             return ResponseEntity.ok("Imported: " + added + "/" + total + " (skipped: " + skipped + ") Skipped emails: " + skippedEmails);
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body("Failed to import subscribers: " + e.getMessage());
         }
     }

@@ -1,20 +1,19 @@
-package com.project.email_usingJava.Config;
+package com.project.email_usingJava.controller;
 
 //AuthController.java
 
-import com.project.email_usingJava.User.*;
+import com.project.email_usingJava.model.UserModel;
+import com.project.email_usingJava.repository.UserRepository;
+import com.project.email_usingJava.Config.JwtUtil;
+import com.project.email_usingJava.repository.UserSubscriberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import com.project.email_usingJava.Config.JwtUtil;
-import com.project.email_usingJava.Email.UserSubscriberRepository;
-
-import java.util.function.Supplier;
-import java.util.Map;
-import java.util.Optional;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
+
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
