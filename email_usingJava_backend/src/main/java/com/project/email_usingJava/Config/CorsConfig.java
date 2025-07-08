@@ -14,7 +14,7 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
             "http://localhost:5173", // local dev
-            "https://your-production-domain.com" // <-- replace with your real production domain
+            "https://fullstack-email-autmotaion-a02x.onrender.com" // <-- replace with your real production domain
         ));
         config.setAllowCredentials(true);
         config.addAllowedHeader("*");
