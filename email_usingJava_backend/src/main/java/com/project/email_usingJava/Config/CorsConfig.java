@@ -4,7 +4,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import java.util.Arrays;
 
 @Configuration
 public class CorsConfig {
@@ -13,21 +12,11 @@ public class CorsConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
-                String allowedOriginEnv = System.getenv("CORS_ORIGIN");
-                String[] allowedOrigins;
-                if (allowedOriginEnv != null && !allowedOriginEnv.isEmpty()) {
-                    allowedOrigins = Arrays.stream(allowedOriginEnv.split(","))
-                        .map(String::trim)
-                        .filter(origin -> !origin.equals("*") && !origin.isEmpty())
-                        .toArray(String[]::new);
-                    if (allowedOrigins.length == 0) {
-                        allowedOrigins = new String[]{"https://full-stack-email-autmotaion.vercel.app", "http://localhost:5173"};
-                    }
-                } else {
-                    allowedOrigins = new String[]{"https://full-stack-email-autmotaion.vercel.app", "http://localhost:5173"};
-                }
                 registry.addMapping("/**")
-                        .allowedOrigins(allowedOrigins)
+                        .allowedOrigins(
+                            "https://full-stack-email-autmotaion.vercel.app",
+                            "http://localhost:5173"
+                        )
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
