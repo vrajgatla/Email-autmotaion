@@ -18,6 +18,7 @@ public class CorsConfig {
                 if (allowedOriginEnv != null && !allowedOriginEnv.isEmpty()) {
                     allowedOrigins = Arrays.stream(allowedOriginEnv.split(","))
                         .map(String::trim)
+                        .filter(origin -> !origin.equals("*"))
                         .toArray(String[]::new);
                 } else {
                     allowedOrigins = new String[]{"https://full-stack-email-autmotaion.vercel.app", "http://localhost:5173"};
