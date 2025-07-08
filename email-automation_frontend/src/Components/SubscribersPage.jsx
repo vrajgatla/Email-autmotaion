@@ -29,7 +29,7 @@ const SubscribersPage = () => {
       // console.log("Username from localStorage:", username);
       // console.log("Auth headers:", getAuthHeaders());
       
-      const res = await api.get(`/subscribers`, { params: { username } });
+      const res = await api.get(`/api/subscribers`, { params: { username } });
       setSubscribers(res.data);
     } catch (error) {
       // console.error("Failed to fetch subscribers", error);
@@ -48,7 +48,7 @@ const SubscribersPage = () => {
       return;
     }
     try {
-      await api.post(`/subscribers`, form, { params: { username } });
+      await api.post(`/api/subscribers`, form, { params: { username } });
       setForm({ name: "", email: "" });
       setStatus("Subscriber added!");
       fetchSubscribers();
@@ -59,7 +59,7 @@ const SubscribersPage = () => {
 
   const handleDelete = async (id) => {
     try {
-      await api.delete(`/subscribers/${id}`, { params: { username } });
+      await api.delete(`/api/subscribers/${id}`, { params: { username } });
       fetchSubscribers();
     } catch (error) {
       setStatus("Failed to delete subscriber");
@@ -80,7 +80,7 @@ const SubscribersPage = () => {
     try {
       const formData = new FormData();
       formData.append("file", csvFile);
-      const res = await api.post(`/subscribers/import-csv`, formData, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
+      const res = await api.post(`/api/subscribers/import-csv`, formData, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
       setCsvStatus(res.data);
       setCsvFile(null);
       fetchSubscribers();

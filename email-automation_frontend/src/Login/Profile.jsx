@@ -20,7 +20,7 @@ const Profile = () => {
 
   const fetchCurrentAppPassword = async () => {
     try {
-      const res = await api.get('/auth/app-password', { params: { username } });
+      const res = await api.get('/api/auth/app-password', { params: { username } });
       setCurrentAppPassword(res.data.appPassword);
       setLoading(false);
     } catch (err) {
@@ -37,7 +37,7 @@ const Profile = () => {
     }
     
     try {
-      const res = await api.post('/auth/update-app-password', {
+      const res = await api.post('/api/auth/update-app-password', {
         username,
         appPassword: newAppPassword,
       });

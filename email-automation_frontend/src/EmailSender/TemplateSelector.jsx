@@ -31,7 +31,7 @@ const TemplateSelector = ({ value, onChange, onTemplateSelect }) => {
     try {
       setLoading(true);
       const token = getToken();
-      const response = await api.get('/emails/templates', {
+      const response = await api.get('/api/emails/templates', {
         headers: {
           Authorization: `Bearer ${token}`
         }

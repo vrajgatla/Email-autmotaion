@@ -15,7 +15,7 @@ const Login = ({ saveToken }) => {
     
     try {
       // console.log("Attempting login with email:", email);
-      const res = await api.post('/auth/login', {
+      const res = await api.post('/api/auth/login', {
         username: email,
         password,
       });
