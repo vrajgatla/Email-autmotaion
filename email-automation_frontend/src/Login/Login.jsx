@@ -1,14 +1,13 @@
 // src/pages/Login.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api from '../api';
 
 const Login = ({ saveToken }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const API_URL = import.meta.env.VITE_API_URL;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,7 +15,7 @@ const Login = ({ saveToken }) => {
     
     try {
       // console.log("Attempting login with email:", email);
-      const res = await axios.post(`${API_URL}/auth/login`, {
+      const res = await api.post('/auth/login', {
         username: email,
         password,
       });

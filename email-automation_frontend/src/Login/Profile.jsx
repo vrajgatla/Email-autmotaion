@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from '../api';
 import { useNavigate } from "react-router-dom";
 import { logout } from "../App";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 const Profile = () => {
   const username = localStorage.getItem("username") || "";
@@ -22,7 +20,7 @@ const Profile = () => {
 
   const fetchCurrentAppPassword = async () => {
     try {
-      const res = await axios.get(`${API_URL}/auth/app-password?username=${username}`);
+      const res = await api.get('/auth/app-password', { params: { username } });
       setCurrentAppPassword(res.data.appPassword);
       setLoading(false);
     } catch (err) {
@@ -39,7 +37,7 @@ const Profile = () => {
     }
     
     try {
-      const res = await axios.post(`${API_URL}/auth/update-app-password`, {
+      const res = await api.post('/auth/update-app-password', {
         username,
         appPassword: newAppPassword,
       });

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from '../api';
 import { getToken } from "../App";
 
 const TemplateSelector = ({ value, onChange, onTemplateSelect }) => {
@@ -7,8 +7,6 @@ const TemplateSelector = ({ value, onChange, onTemplateSelect }) => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const API_URL = import.meta.env.VITE_API_URL;
 
   useEffect(() => {
     fetchTemplates();
@@ -33,7 +31,7 @@ const TemplateSelector = ({ value, onChange, onTemplateSelect }) => {
     try {
       setLoading(true);
       const token = getToken();
-      const response = await axios.get(`${API_URL}/emails/templates`, {
+      const response = await api.get('/emails/templates', {
         headers: {
           Authorization: `Bearer ${token}`
         }

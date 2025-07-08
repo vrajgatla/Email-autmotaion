@@ -1,7 +1,7 @@
 // EmailSenderForm.jsx
 import React, { useState } from "react";
 
-import axios from "axios";
+import api from '../api';
 import EmailTypeSelector from "./EmailTypeSelector";
 import RecipientInput from "./RecipientInput";
 import BodyInput from "./BodyInput";
@@ -11,8 +11,6 @@ import AttachmentInput from "./AttachmentInput";
 import TemplateSelector from "./TemplateSelector";
 import TemplatePreview from "./TemplatePreview";
 import { getToken } from "../App";
-
-const API_URL = import.meta.env.VITE_API_URL;
 
 const EmailSenderForm = () => {
   const [formData, setFormData] = useState({
@@ -28,8 +26,6 @@ const EmailSenderForm = () => {
   const [status, setStatus] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [bulkSummary, setBulkSummary] = useState(null);
-
-  const backendUrl = `${API_URL}/emails`;
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -61,7 +57,7 @@ const EmailSenderForm = () => {
       if (sendToAll) {
         let response;
         if (emailType === "simple") {
-          response = await axios.post(`${backendUrl}/send-simple-to-all`, null, {
+          response = await api.post('/emails/send-simple-to-all', null, {
             params: { subject: formData.subject, body: formData.body },
             headers,
           });
@@ -70,7 +66,7 @@ const EmailSenderForm = () => {
           form.append("subject", formData.subject);
           form.append("body", formData.body);
           attachments.forEach((file) => form.append("attachments", file));
-          response = await axios.post(`${backendUrl}/send-attachment-to-all`, form, {
+          response = await api.post('/emails/send-attachment-to-all', form, {
             headers: { ...headers, "Content-Type": "multipart/form-data" },
           });
         } else if (emailType === "template") {
@@ -84,12 +80,12 @@ const EmailSenderForm = () => {
             // Add variables as JSON string
             form.append("variables", JSON.stringify(Object.fromEntries(variables.filter(v => v.key).map(v => [v.key, v.value]))));
             responseConfig = { headers: { ...headers, "Content-Type": "multipart/form-data" } };
-            response = await axios.post(`${backendUrl}/send-template-to-all`, form, responseConfig);
+            response = await api.post('/emails/send-template-to-all', form, responseConfig);
           } else {
             // No attachments, send as JSON
             const varsObj = {};
             variables.forEach(({ key, value }) => { if (key) varsObj[key] = value; });
-            response = await axios.post(`${backendUrl}/send-template-to-all`, varsObj, {
+            response = await api.post('/emails/send-template-to-all', varsObj, {
               params: { subject: formData.subject, templateName: formData.templateName },
               headers,
             });
@@ -105,7 +101,7 @@ const EmailSenderForm = () => {
       }
 
       if (emailType === "simple") {
-        await axios.post(`${backendUrl}/send-simple${endpointSuffix}`, null, {
+        await api.post(`/emails/send-simple${endpointSuffix}`, null, {
           params: sendToAll
             ? {
               subject: formData.subject,
@@ -125,7 +121,7 @@ const EmailSenderForm = () => {
         attachments.forEach((file) => form.append("attachments", file));
         if (!sendToAll) form.append("to", formData.to);
 
-        await axios.post(`${backendUrl}/send-attachment${endpointSuffix}`, form, {
+        await api.post(`/emails/send-attachment${endpointSuffix}`, form, {
           headers: { 
             ...headers,
             "Content-Type": "multipart/form-data" 
@@ -156,7 +152,7 @@ const EmailSenderForm = () => {
           if (key) varsObj[key] = value;
         });
 
-        await axios.post(`${backendUrl}/send-template${endpointSuffix}`, varsObj, {
+        await api.post(`/emails/send-template${endpointSuffix}`, varsObj, {
           params: sendToAll
             ? {
               subject: formData.subject,

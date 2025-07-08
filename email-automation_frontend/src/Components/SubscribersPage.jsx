@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from '../api';
 import { getToken } from "../App";
 
 const SubscribersPage = () => {
@@ -9,9 +9,6 @@ const SubscribersPage = () => {
   const username = localStorage.getItem("username");
   const [csvFile, setCsvFile] = useState(null);
   const [csvStatus, setCsvStatus] = useState("");
-
-  const API_URL = import.meta.env.VITE_API_URL;
-  const backendUrl = `${API_URL}/subscribers`;
 
   const getAuthHeaders = () => {
     const token = getToken();
@@ -32,9 +29,7 @@ const SubscribersPage = () => {
       // console.log("Username from localStorage:", username);
       // console.log("Auth headers:", getAuthHeaders());
       
-      const res = await axios.get(`${backendUrl}?username=${username}`, {
-        headers: getAuthHeaders(),
-      });
+      const res = await api.get(`/subscribers`, { params: { username } });
       setSubscribers(res.data);
     } catch (error) {
       // console.error("Failed to fetch subscribers", error);
@@ -53,9 +48,7 @@ const SubscribersPage = () => {
       return;
     }
     try {
-      await axios.post(`${backendUrl}?username=${username}`, form, {
-        headers: getAuthHeaders(),
-      });
+      await api.post(`/subscribers`, form, { params: { username } });
       setForm({ name: "", email: "" });
       setStatus("Subscriber added!");
       fetchSubscribers();
@@ -66,9 +59,7 @@ const SubscribersPage = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${backendUrl}/${id}?username=${username}`, {
-        headers: getAuthHeaders(),
-      });
+      await api.delete(`/subscribers/${id}`, { params: { username } });
       fetchSubscribers();
     } catch (error) {
       setStatus("Failed to delete subscriber");
@@ -89,11 +80,7 @@ const SubscribersPage = () => {
     try {
       const formData = new FormData();
       formData.append("file", csvFile);
-      const res = await axios.post(
-        `${backendUrl}/import-csv`,
-        formData,
-        { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } }
-      );
+      const res = await api.post(`/subscribers/import-csv`, formData, { headers: { ...getAuthHeaders(), "Content-Type": "multipart/form-data" } });
       setCsvStatus(res.data);
       setCsvFile(null);
       fetchSubscribers();
