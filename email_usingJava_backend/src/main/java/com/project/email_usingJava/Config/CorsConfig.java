@@ -14,7 +14,8 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOriginPatterns(List.of(
             "http://localhost:5173", // local dev
-            "https://full-stack-email-autmotaion.vercel.app" // production domain, no trailing slash
+            "https://full-stack-email-autmotaion.vercel.app/" // <-- replace with your real production domain
+
         ));
         config.setAllowCredentials(true);
         config.addAllowedHeader("*");
