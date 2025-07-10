@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.PostConstruct;
+import com.project.email_usingJava.exception.*;
 
 @Service
 public class DynamicTableService {
@@ -34,7 +35,7 @@ public class DynamicTableService {
             jdbcTemplate.execute(createTableSQL);
             System.out.println("Main user_subscribers table created/verified successfully");
         } catch (Exception e) {
-            System.err.println("Error creating main table: " + e.getMessage());
+            throw new DatabaseException("Error creating main table: " + e.getMessage());
         }
     }
     

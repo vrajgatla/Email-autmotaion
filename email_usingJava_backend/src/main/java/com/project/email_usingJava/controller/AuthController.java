@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 
 import java.util.Map;
 import java.util.Optional;
+import com.project.email_usingJava.exception.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -33,79 +34,52 @@ public class AuthController {
 
  @PostMapping("/signup")
  public ResponseEntity<String> signup(@RequestBody UserModel user) {
-     try {
-         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-             return ResponseEntity.badRequest().body("Username already exists");
-         }
-         if (userRepository.findByEmail(user.getEmail()).isPresent()) {
-             return ResponseEntity.badRequest().body("Email already registered");
-         }
-         // Hash the password before saving
-         user.setPassword(passwordEncoder.encode(user.getPassword()));
-         // Set a default app password if not provided
-         if (user.getAppPassword() == null || user.getAppPassword().isEmpty()) {
-             user.setAppPassword("default-app-password");
-         }
-         userRepository.save(user);
-         
-         // Create user's subscriber table
-         userSubscriberRepository.createUserTable(user.getUsername());
-         
-         return ResponseEntity.ok("Signup successful");
-     } catch (Exception e) {
-         System.err.println("Signup error: " + e.getMessage());
-         e.printStackTrace();
-         return ResponseEntity.status(500).body("Internal server error: " + e.getMessage());
+     if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+         throw new UserAlreadyExistsException("Username already exists");
      }
+     if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+         throw new UserAlreadyExistsException("Email already registered");
+     }
+     // Hash the password before saving
+     user.setPassword(passwordEncoder.encode(user.getPassword()));
+     // Set a default app password if not provided
+     if (user.getAppPassword() == null || user.getAppPassword().isEmpty()) {
+         user.setAppPassword("default-app-password");
+     }
+     userRepository.save(user);
+     // Create user's subscriber table
+     userSubscriberRepository.createUserTable(user.getUsername());
+     return ResponseEntity.ok("Signup successful");
  }
 
  @PostMapping("/login")
  public ResponseEntity<?> login(@RequestBody UserModel credentials) {
-     try {
-         System.out.println("Login attempt for username: " + credentials.getUsername());
-         
-         if (credentials.getUsername() == null || credentials.getPassword() == null) {
-             return ResponseEntity.badRequest().body("Username and password are required");
-         }
-         
-         Optional<UserModel> userOpt = userRepository.findByUsername(credentials.getUsername());
-         if (userOpt.isEmpty()) {
-             userOpt = userRepository.findByEmail(credentials.getUsername());
-         }
-         
-         if (userOpt.isPresent()) {
-             UserModel user = userOpt.get();
-             System.out.println("User found: " + user.getUsername() + ", email: " + user.getEmail());
-             
-             if (passwordEncoder.matches(credentials.getPassword(), user.getPassword())) {
-                 System.out.println("Password matches, login successful");
-                 try {
-                     // Generate JWT token
-                     String token = jwtUtil.generateToken(user.getUsername());
-                     System.out.println("JWT token generated successfully");
-                     Map<String, String> response = Map.of(
-                         "token", token,
-                         "username", user.getUsername(),
-                         "email", user.getEmail()
-                     );
-                     return ResponseEntity.ok(response);
-                 } catch (Exception jwtError) {
-                     System.err.println("JWT generation error: " + jwtError.getMessage());
-                     jwtError.printStackTrace();
-                     return ResponseEntity.status(500).body("Token generation failed: " + jwtError.getMessage());
-                 }
-             } else {
-                 System.out.println("Password does not match");
+     if (credentials.getUsername() == null || credentials.getPassword() == null) {
+         throw new InvalidInputException("Username and password are required");
+     }
+     Optional<UserModel> userOpt = userRepository.findByUsername(credentials.getUsername());
+     if (userOpt.isEmpty()) {
+         userOpt = userRepository.findByEmail(credentials.getUsername());
+     }
+     if (userOpt.isPresent()) {
+         UserModel user = userOpt.get();
+         if (passwordEncoder.matches(credentials.getPassword(), user.getPassword())) {
+             try {
+                 String token = jwtUtil.generateToken(user.getUsername());
+                 Map<String, String> response = Map.of(
+                     "token", token,
+                     "username", user.getUsername(),
+                     "email", user.getEmail()
+                 );
+                 return ResponseEntity.ok(response);
+             } catch (Exception jwtError) {
+                 throw new JwtTokenException("Token generation failed: " + jwtError.getMessage());
              }
          } else {
-             System.out.println("User not found: " + credentials.getUsername());
+             throw new AuthenticationException("Invalid username or password.");
          }
-         
-         return ResponseEntity.badRequest().body("Invalid credentials");
-     } catch (Exception e) {
-         System.err.println("Login error: " + e.getMessage());
-         e.printStackTrace();
-         return ResponseEntity.status(500).body("Internal server error: " + e.getMessage());
+     } else {
+         throw new AuthenticationException("Invalid username or password.");
      }
  }
 
@@ -116,11 +90,11 @@ public class AuthController {
      Optional<UserModel> userOpt = userRepository.findByUsername(username);
      if (userOpt.isPresent()) {
          UserModel user = userOpt.get();
-         user.setAppPassword(newAppPassword);
+         user.setAppPassword(newAppPassword); // Encrypt and hash the new password
          userRepository.save(user);
          return ResponseEntity.ok("App password updated successfully");
      } else {
-         return ResponseEntity.badRequest().body("User not found");
+         throw new UserNotFoundException("User not found");
      }
  }
 
@@ -134,7 +108,7 @@ public class AuthController {
          );
          return ResponseEntity.ok(response);
      } else {
-         return ResponseEntity.badRequest().body("User not found");
+         throw new UserNotFoundException("User not found");
      }
  }
 
@@ -178,6 +152,93 @@ public class AuthController {
      // In a stateless JWT system, logout is handled on the client side
      // by removing the token from localStorage
      return ResponseEntity.ok("Logout successful. Please clear your browser's localStorage.");
+ }
+
+ // --- PROFILE ENDPOINTS ---
+ @GetMapping("/profile")
+ public ResponseEntity<?> getProfile(Authentication authentication) {
+     if (authentication == null || authentication.getName() == null) {
+         return ResponseEntity.status(401).body("Not authenticated");
+     }
+     String username = authentication.getName();
+     Optional<UserModel> userOpt = userRepository.findByUsername(username);
+     if (userOpt.isEmpty()) {
+         return ResponseEntity.status(404).body("User not found");
+     }
+     UserModel user = userOpt.get();
+
+     // Count active subscribers
+     int subscriberCount = userSubscriberRepository.countSubscribers(username);
+     // Total emails sent
+     int sentEmails = user.getSentEmails();
+
+     String avatarBase64 = null;
+     if (user.getAvatar() != null && user.getAvatar().length > 0) {
+         avatarBase64 = "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(user.getAvatar());
+     } else {
+         avatarBase64 = "https://randomuser.me/api/portraits/men/32.jpg"; // Default avatar
+     }
+     Map<String, Object> profile = Map.of(
+         "name", user.getFullName() != null ? user.getFullName() : user.getUsername(),
+         "username", user.getUsername(),
+         "email", user.getEmail(),
+         "verified", true,
+         "avatar", avatarBase64,
+         "stats", Map.of(
+             "emailsSent", sentEmails,
+             "subscribers", subscriberCount,
+             "daily", new int[]{10, 20, 15, 30, 25, 40, 35},
+             "weekly", new int[]{100, 120, 110, 130, 125, 140, 135}
+         ),
+         "personal", Map.of(
+             "fullName", user.getFullName() != null ? user.getFullName() : user.getUsername(),
+             "dob", user.getDob() != null ? user.getDob() : "Not provided",
+             "gender", user.getGender() != null ? user.getGender() : "Not specified",
+             "phone", user.getPhone() != null ? user.getPhone() : "Not provided",
+             "address", user.getAddress() != null ? user.getAddress() : "Not provided"
+         )
+     );
+     return ResponseEntity.ok(profile);
+ }
+
+ @PostMapping("/profile")
+ public ResponseEntity<?> updateProfile(Authentication authentication, @RequestBody Map<String, String> payload) {
+     if (authentication == null || authentication.getName() == null) {
+         return ResponseEntity.status(401).body("Not authenticated");
+     }
+     String username = authentication.getName();
+     Optional<UserModel> userOpt = userRepository.findByUsername(username);
+     if (userOpt.isEmpty()) {
+         return ResponseEntity.status(404).body("User not found");
+     }
+     UserModel user = userOpt.get();
+     if (payload.containsKey("fullName")) user.setFullName(payload.get("fullName"));
+     if (payload.containsKey("dob")) user.setDob(payload.get("dob"));
+     if (payload.containsKey("gender")) user.setGender(payload.get("gender"));
+     if (payload.containsKey("phone")) user.setPhone(payload.get("phone"));
+     if (payload.containsKey("address")) user.setAddress(payload.get("address"));
+     userRepository.save(user);
+     return ResponseEntity.ok("Profile updated successfully");
+ }
+
+ @PostMapping("/profile/avatar")
+ public ResponseEntity<?> uploadAvatar(Authentication authentication, @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+     if (authentication == null || authentication.getName() == null) {
+         return ResponseEntity.status(401).body("Not authenticated");
+     }
+     String username = authentication.getName();
+     Optional<UserModel> userOpt = userRepository.findByUsername(username);
+     if (userOpt.isEmpty()) {
+         return ResponseEntity.status(404).body("User not found");
+     }
+     UserModel user = userOpt.get();
+     try {
+         user.setAvatar(file.getBytes());
+         userRepository.save(user);
+         return ResponseEntity.ok("Avatar updated successfully");
+     } catch (Exception e) {
+         return ResponseEntity.status(500).body("Failed to upload avatar: " + e.getMessage());
+     }
  }
 }
 

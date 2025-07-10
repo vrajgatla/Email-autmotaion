@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import com.project.email_usingJava.repository.UserRepository;
 import com.project.email_usingJava.service.UserService;
 import com.project.email_usingJava.model.UserModel;
+import com.project.email_usingJava.exception.*;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -17,10 +18,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public String signup(UserModel user) {
         if (userRepository.existsByUsername(user.getUsername())) {
-            return "Username already taken!";
+            throw new UserAlreadyExistsException("Username already taken!");
         }
         if (userRepository.existsByEmail(user.getEmail())) {
-            return "Email already registered!";
+            throw new UserAlreadyExistsException("Email already registered!");
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);

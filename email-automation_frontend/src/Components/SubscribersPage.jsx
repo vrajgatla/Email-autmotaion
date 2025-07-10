@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import api from '../api';
+import BackButton from './Common/BackButton';
 
 const SubscribersPage = () => {
   const [subscribers, setSubscribers] = useState([]);
@@ -36,18 +37,32 @@ const SubscribersPage = () => {
       await api.post(`/api/subscribers`, form, { params: { username } });
       setForm({ name: "", email: "" });
       setStatus("Subscriber added!");
+      setError("");
       fetchSubscribers();
     } catch (error) {
-      setStatus("Failed to add subscriber");
+      let errorMessage = "Failed to add subscriber";
+      if (error.response && error.response.data && error.response.data.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response && typeof error.response.data === 'string') {
+        errorMessage = error.response.data;
+      }
+      setStatus(errorMessage);
     }
   };
 
   const handleDelete = async (id) => {
     try {
       await api.delete(`/api/subscribers/${id}`, { params: { username } });
+      setStatus("");
       fetchSubscribers();
     } catch (error) {
-      setStatus("Failed to delete subscriber");
+      let errorMessage = "Failed to delete subscriber";
+      if (error.response && error.response.data && error.response.data.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response && typeof error.response.data === 'string') {
+        errorMessage = error.response.data;
+      }
+      setStatus(errorMessage);
     }
   };
 
@@ -70,14 +85,19 @@ const SubscribersPage = () => {
       setCsvFile(null);
       fetchSubscribers();
     } catch (error) {
-      setCsvStatus(
-        error.response?.data || "Failed to import subscribers. Please check your CSV file."
-      );
+      let errorMessage = "Failed to import subscribers. Please check your CSV file.";
+      if (error.response && error.response.data && error.response.data.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response && typeof error.response.data === 'string') {
+        errorMessage = error.response.data;
+      }
+      setCsvStatus(errorMessage);
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto bg-white p-4 sm:p-6 rounded shadow">
+      <div className="mb-4"><BackButton /></div>
       <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">My Subscribers</h1>
 
       <form onSubmit={handleSubmit} className="mb-4 sm:mb-6 grid grid-cols-1 md:grid-cols-3 gap-2 sm:gap-4">

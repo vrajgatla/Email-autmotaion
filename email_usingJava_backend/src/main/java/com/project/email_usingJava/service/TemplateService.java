@@ -1,63 +1,84 @@
 package com.project.email_usingJava.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.project.email_usingJava.Config.TemplateAutoPopulateConfig;
 import java.util.*;
 
 @Service
 public class TemplateService {
     
-    private final Map<String, TemplateInfo> availableTemplates;
+    private final Map<String, TemplateInfo> availableTemplates = new HashMap<>();
+    private final TemplateAutoPopulateConfig autoPopulateConfig;
     
-    public TemplateService() {
-        availableTemplates = new HashMap<>();
+    @Autowired
+    public TemplateService(TemplateAutoPopulateConfig autoPopulateConfig) {
+        this.autoPopulateConfig = autoPopulateConfig;
         initializeTemplates();
     }
     
     private void initializeTemplates() {
-        // Welcome template
-        TemplateInfo welcome = new TemplateInfo();
-        welcome.setName("welcome");
-        welcome.setDisplayName("Welcome Email");
-        welcome.setDescription("A warm welcome email for new users");
-        welcome.setVariables(Arrays.asList("name", "company", "website"));
-        welcome.setPreview("Hi [name], welcome to [company]! We're thrilled to have you here.");
-        availableTemplates.put("welcome", welcome);
+        Map<String, Map<String, String>> config = this.autoPopulateConfig.getAutoPopulateConfig();
         
-        // Good Morning template
-        TemplateInfo goodMorning = new TemplateInfo();
-        goodMorning.setName("goodmorning");
-        goodMorning.setDisplayName("Good Morning Email");
-        goodMorning.setDescription("A cheerful morning greeting email");
-        goodMorning.setVariables(Arrays.asList("name", "date", "weather"));
-        goodMorning.setPreview("Good morning [name]! Wishing you a productive day ahead.");
-        availableTemplates.put("goodmorning", goodMorning);
-        
-        // Thank You template
-        TemplateInfo thankYou = new TemplateInfo();
-        thankYou.setName("thankyou");
-        thankYou.setDisplayName("Thank You Email");
-        thankYou.setDescription("A gratitude email for loyal customers");
-        thankYou.setVariables(Arrays.asList("name", "service", "feedback"));
-        thankYou.setPreview("Hello [name], thank you for choosing [service]. Your support means a lot!");
-        availableTemplates.put("thankyou", thankYou);
-        
-        // Newsletter template
-        TemplateInfo newsletter = new TemplateInfo();
-        newsletter.setName("newsletter");
-        newsletter.setDisplayName("Newsletter Email");
-        newsletter.setDescription("A comprehensive monthly newsletter with highlights and updates");
-        newsletter.setVariables(Arrays.asList("name", "company", "date", "highlight1", "highlight2", "highlight3", "newsContent", "proTip", "website", "unsubscribeLink"));
-        newsletter.setPreview("Hello [name]! Here's your monthly newsletter from [company] with the latest updates and insights.");
-        availableTemplates.put("newsletter", newsletter);
-        
-        // Promotion template
-        TemplateInfo promotion = new TemplateInfo();
-        promotion.setName("promotion");
-        promotion.setDisplayName("Promotion Email");
-        promotion.setDescription("An attractive promotional email for special offers and discounts");
-        promotion.setVariables(Arrays.asList("name", "company", "discountPercent", "offerDescription", "promoCode", "feature1", "feature2", "feature3", "ctaLink", "expiryDate", "supportEmail"));
-        promotion.setPreview("Hello [name]! Don't miss our special [discountPercent]% off offer on [offerDescription]!");
-        availableTemplates.put("promotion", promotion);
+        // Internship/Job Request Email
+        TemplateInfo internship = new TemplateInfo();
+        internship.setName("internship_job_request");
+        internship.setDisplayName("Internship/Job Request Email");
+        internship.setDescription("Professional email template for students seeking internships or jobs. Includes sender and receiver details, position, and a custom message.");
+        internship.setVariables(Arrays.asList(
+            "recipientName", "studentName", "degree", "university", "position", "company", "fieldIndustry", "skills", "email", "phone"
+        ));
+        internship.setAutoPopulatedVariables(config.get("internship_job_request"));
+        internship.setPreview("Dear [recipientName],\nI am [studentName] ([email]) applying for [position] at [company].\n[skills]\nBest, [studentName]");
+        availableTemplates.put("internship_job_request", internship);
+
+        // Feedback Request Email
+        TemplateInfo feedback = new TemplateInfo();
+        feedback.setName("feedback_request");
+        feedback.setDisplayName("Feedback Request Email");
+        feedback.setDescription("Template for requesting feedback from clients, students, or colleagues. Includes sender, receiver, and feedback topic.");
+        feedback.setVariables(Arrays.asList(
+            "recipientName", "companyService", "feedbackLink", "company"
+        ));
+        feedback.setAutoPopulatedVariables(config.get("feedback_request"));
+        feedback.setPreview("Dear [recipientName],\nThank you for choosing [companyService]. Please give feedback: [feedbackLink]\nThe [company] Team");
+        availableTemplates.put("feedback_request", feedback);
+
+        // Freelancer Service Pitch Email
+        TemplateInfo freelancer = new TemplateInfo();
+        freelancer.setName("freelancer_service_pitch");
+        freelancer.setDisplayName("Freelancer Service Pitch Email");
+        freelancer.setDescription("Pitch your freelance services to potential clients. Includes sender, receiver, service, and a pitch message.");
+        freelancer.setVariables(Arrays.asList(
+            "clientName", "freelancerName", "serviceType", "clientBusiness", "problemGoal", "service1", "service2", "service3", "bookingLink"
+        ));
+        freelancer.setAutoPopulatedVariables(config.get("freelancer_service_pitch"));
+        freelancer.setPreview("Hi [clientName], I'm [freelancerName] ([serviceType]). Let's connect! [bookingLink]");
+        availableTemplates.put("freelancer_service_pitch", freelancer);
+
+        // Tutoring/Coaching Offer Email
+        TemplateInfo tutoring = new TemplateInfo();
+        tutoring.setName("tutoring_coaching_offer");
+        tutoring.setDisplayName("Tutoring/Coaching Offer Email");
+        tutoring.setDescription("Reach out to students or parents with a tutoring/coaching offer. Includes sender, receiver, subject, and offer details.");
+        tutoring.setVariables(Arrays.asList(
+            "studentName", "tutorName", "subject", "topicGoal", "feature1", "feature2", "feature3", "bookingLink"
+        ));
+        tutoring.setAutoPopulatedVariables(config.get("tutoring_coaching_offer"));
+        tutoring.setPreview("Dear [studentName], I'm [tutorName], tutoring in [subject]. [bookingLink]");
+        availableTemplates.put("tutoring_coaching_offer", tutoring);
+
+        // Local Product/Service Promo Email
+        TemplateInfo localPromo = new TemplateInfo();
+        localPromo.setName("local_product_service_promo");
+        localPromo.setDisplayName("Local Product/Service Promo Email");
+        localPromo.setDescription("Promote a local product or service to potential customers. Includes sender, receiver, product/service, and promo details.");
+        localPromo.setVariables(Arrays.asList(
+            "businessName", "customerName", "productService", "promoTitle", "promoDetails", "promoCode", "discount", "expiryDate", "shopLink"
+        ));
+        localPromo.setAutoPopulatedVariables(config.get("local_product_service_promo"));
+        localPromo.setPreview("Hi [customerName], [promoTitle] at [businessName]. Use [promoCode] for [discount] off! [shopLink]");
+        availableTemplates.put("local_product_service_promo", localPromo);
     }
     
     public List<TemplateInfo> getAllTemplates() {
@@ -78,6 +99,7 @@ public class TemplateService {
         private String description;
         private List<String> variables;
         private String preview;
+        private Map<String, String> autoPopulatedVariables;
         
         // Getters and Setters
         public String getName() { return name; }
@@ -94,5 +116,8 @@ public class TemplateService {
         
         public String getPreview() { return preview; }
         public void setPreview(String preview) { this.preview = preview; }
+        
+        public Map<String, String> getAutoPopulatedVariables() { return autoPopulatedVariables; }
+        public void setAutoPopulatedVariables(Map<String, String> autoPopulatedVariables) { this.autoPopulatedVariables = autoPopulatedVariables; }
     }
 } 

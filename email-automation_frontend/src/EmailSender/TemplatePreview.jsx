@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 
 const TemplatePreview = ({ template, variables }) => {
   const [previewHtml, setPreviewHtml] = useState("");
-  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (template && variables.length > 0) {
@@ -65,51 +64,43 @@ const TemplatePreview = ({ template, variables }) => {
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-lg">Template Preview</h3>
-        <button
-          onClick={() => setShowPreview(!showPreview)}
-          className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
-        >
-          {showPreview ? "Hide Preview" : "Show Preview"}
-        </button>
       </div>
       
-      {showPreview && (
-        <div className="bg-white border rounded-lg p-4 shadow-sm">
-          <div className="mb-3">
-            <strong>Subject:</strong> 
-            <span className="ml-2 text-gray-600">
-              {template.displayName} - {variables.find(v => v.key === "company")?.value || "Your Company"}
-            </span>
-          </div>
-          
-          <div className="mb-3">
-            <strong>Preview:</strong>
-            <div className="mt-1 p-3 bg-gray-50 rounded text-sm">
-              {previewHtml}
-            </div>
-          </div>
-          
-          <div>
-            <strong>Variables Used:</strong>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {variables.map(({ key, value }) => (
-                key && value && (
-                  <span
-                    key={key}
-                    className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs"
-                  >
-                    {key}: {value}
-                  </span>
-                )
-              ))}
-            </div>
-          </div>
-          
-          <div className="mt-3 text-xs text-gray-500">
-            <strong>Note:</strong> This is a text preview. The actual email will be sent as HTML with full styling.
+      <div className="bg-white border rounded-lg p-4 shadow-sm">
+        <div className="mb-3">
+          <strong>Subject:</strong> 
+          <span className="ml-2 text-gray-600">
+            {template.displayName} - {variables.find(v => v.key === "company")?.value || "Your Company"}
+          </span>
+        </div>
+        
+        <div className="mb-3">
+          <strong>Preview:</strong>
+          <div className="mt-1 p-3 bg-gray-50 rounded text-sm">
+            {previewHtml}
           </div>
         </div>
-      )}
+        
+        <div>
+          <strong>Variables Used:</strong>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {variables.map(({ key, value }) => (
+              key && value && (
+                <span
+                  key={key}
+                  className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs"
+                >
+                  {key}: {value}
+                </span>
+              )
+            ))}
+          </div>
+        </div>
+        
+        <div className="mt-3 text-xs text-gray-500">
+          <strong>Note:</strong> This is a text preview. The actual email will be sent as HTML with full styling.
+        </div>
+      </div>
     </div>
   );
 };

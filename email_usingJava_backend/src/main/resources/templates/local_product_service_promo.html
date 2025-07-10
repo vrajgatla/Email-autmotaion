@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Local Product/Service Promo Email</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f9fafb; color: #222; margin: 0; }
+    .container { max-width: 600px; margin: 2rem auto; background: #fff; border-radius: 1rem; box-shadow: 0 2px 8px #e0e7ef; padding: 2rem; }
+    h2 { color: #ea580c; }
+    .footer { margin-top: 2rem; color: #888; font-size: 0.95em; }
+    .cta { display: inline-block; margin-top: 1rem; background: #ea580c; color: #fff; padding: 0.7rem 1.5rem; border-radius: 0.5rem; text-decoration: none; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Special Offer from [[${businessName}]]!</h2>
+    <p>Hi [[${customerName}]],</p>
+    <p>
+      We're excited to announce a new promotion on our [[${productService}]]: <b>[[${promoTitle}]]</b>.
+    </p>
+    <p>
+      <b>Details:</b> [[${promoDetails}]]
+    </p>
+    <p>
+      Use code <b>[[${promoCode}]]</b> at checkout to get [[${discount}]] off! Offer valid until [[${expiryDate}]].
+    </p>
+    <a th:href="${shopLink}" class="cta">Shop Now</a>
+    <div class="footer">Thank you for supporting local businesses!<br>The [[${businessName}]] Team</div>
+  </div>
+</body>
+</html> 

@@ -82,4 +82,16 @@ public class UserSubscriberRepository {
             return false;
         }
     }
+    
+    public int countSubscribers(String username) {
+        String tableName = dynamicTableService.getUserTableName(username);
+        String sql = "SELECT COUNT(*) FROM " + tableName;
+        try {
+            Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
+            return count != null ? count : 0;
+        } catch (Exception e) {
+            System.err.println("Error counting subscribers for user " + username + ": " + e.getMessage());
+            return 0;
+        }
+    }
 } 

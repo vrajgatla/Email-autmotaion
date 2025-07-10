@@ -1,5 +1,6 @@
 package com.project.email_usingJava.model;
 
+import com.project.email_usingJava.util.AppPasswordUtil;
 import jakarta.persistence.*;
 
 @Entity
@@ -19,7 +20,31 @@ public class UserModel {
     private String password;
 
     @Column(nullable = true)
-    private String appPassword;
+    private String appPassword; // Encrypted
+
+    @Column(nullable = true)
+    private String appPasswordHash; // Hashed
+
+    @Column(length = 255)
+    private String fullName;
+
+    @Column(length = 20)
+    private String dob;
+
+    @Column(length = 10)
+    private String gender;
+
+    @Column(length = 20)
+    private String phone;
+
+    @Column(length = 255)
+    private String address;
+
+    @Lob
+    private byte[] avatar;
+
+    @Column(nullable = false)
+    private int sentEmails = 0;
 
     // Default constructor
     public UserModel() {
@@ -31,7 +56,8 @@ public class UserModel {
         this.username = username;
         this.email = email;
         this.password = password;
-        this.appPassword = appPassword;
+        this.appPassword = AppPasswordUtil.encrypt(appPassword);
+        this.appPasswordHash = AppPasswordUtil.hash(appPassword);
     }
 
     // Getters
@@ -55,6 +81,46 @@ public class UserModel {
         return appPassword;
     }
 
+    public String getDecryptedAppPassword() {
+        return AppPasswordUtil.decrypt(this.appPassword);
+    }
+
+    public String getAppPasswordHash() {
+        return appPasswordHash;
+    }
+
+    public boolean isAppPasswordMatch(String rawPassword) {
+        return AppPasswordUtil.matches(rawPassword, this.appPasswordHash);
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public String getDob() {
+        return dob;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public byte[] getAvatar() {
+        return avatar;
+    }
+
+    public int getSentEmails() {
+        return sentEmails;
+    }
+
     // Setters
     public void setId(Long id) {
         this.id = id;
@@ -73,7 +139,36 @@ public class UserModel {
     }
 
     public void setAppPassword(String appPassword) {
-        this.appPassword = appPassword;
+        this.appPassword = AppPasswordUtil.encrypt(appPassword);
+        this.appPasswordHash = AppPasswordUtil.hash(appPassword);
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public void setDob(String dob) {
+        this.dob = dob;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public void setAvatar(byte[] avatar) {
+        this.avatar = avatar;
+    }
+
+    public void setSentEmails(int sentEmails) {
+        this.sentEmails = sentEmails;
     }
 }
 

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Freelancer Service Pitch Email</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f3f4f6; color: #222; margin: 0; }
+    .container { max-width: 600px; margin: 2rem auto; background: #fff; border-radius: 1rem; box-shadow: 0 2px 8px #e0e7ef; padding: 2rem; }
+    h2 { color: #d97706; }
+    .footer { margin-top: 2rem; color: #888; font-size: 0.95em; }
+    .cta { display: inline-block; margin-top: 1rem; background: #d97706; color: #fff; padding: 0.7rem 1.5rem; border-radius: 0.5rem; text-decoration: none; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Let's Work Together!</h2>
+    <p>Hi [[${clientName}]],</p>
+    <p>
+      My name is <b>[[${freelancerName}]]</b> and I specialize in [[${serviceType}]] for clients like you. I noticed your business, [[${clientBusiness}]], and believe I can help you with [[${problemGoal}]].
+    </p>
+    <p>
+      Here are a few ways I can add value:
+      <ul>
+        <li>[[${service1}]]</li>
+        <li>[[${service2}]]</li>
+        <li>[[${service3}]]</li>
+      </ul>
+    </p>
+    <p>
+      If you're interested, let's schedule a quick call to discuss your needs. You can reply to this email or book a slot here:
+    </p>
+    <a th:href="${bookingLink}" class="cta">Book a Call</a>
+    <div class="footer">Looking forward to connecting!<br>[[${freelancerName}]]</div>
+  </div>
+</body>
+</html> 

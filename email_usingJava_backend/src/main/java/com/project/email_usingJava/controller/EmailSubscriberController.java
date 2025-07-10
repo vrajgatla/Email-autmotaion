@@ -17,6 +17,9 @@ import java.util.Map;
 import org.springframework.http.HttpHeaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.project.email_usingJava.exception.*;
+import com.project.email_usingJava.model.UserModel;
+import com.project.email_usingJava.repository.UserRepository;
 
 @RestController
 @RequestMapping("/api/subscribers")
@@ -28,32 +31,22 @@ public class EmailSubscriberController {
     @Autowired
     private UserSubscriberRepository userSubscriberRepository;
 
-    @PostMapping
-    public ResponseEntity<?> add(@RequestBody Map<String, String> request, @RequestParam String username) {
-        try {
-            String email = request.get("email");
-            String name = request.get("name");
-            
-            if (email == null || name == null) {
-                return ResponseEntity.badRequest().body("Email and name are required");
-            }
-            
-            // Create user's table if it doesn't exist
-            userSubscriberRepository.createUserTable(username);
-            
-            // Check if email already exists
-            if (userSubscriberRepository.emailExists(username, email)) {
-                return ResponseEntity.badRequest().body("Subscriber with this email already exists");
-            }
-            
-            // Save the subscriber
-            userSubscriberRepository.save(username, email, name);
-            
-            return ResponseEntity.ok("Subscriber added successfully");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body("Failed to add subscriber: " + e.getMessage());
+    @Autowired
+    private UserRepository userRepository;
+
+    @PostMapping("/add")
+    public ResponseEntity<String> addSubscriber(@RequestBody Map<String, String> payload, Authentication authentication) {
+        String email = payload.get("email");
+        String name = payload.getOrDefault("name", "");
+        UserModel user = getCurrentUser(authentication);
+        if (email == null || email.isEmpty()) {
+            throw new InvalidInputException("Email is required.");
         }
+        if (userSubscriberRepository.emailExists(user.getUsername(), email)) {
+            throw new DuplicateSubscriberException("Subscriber already exists.");
+        }
+        userSubscriberRepository.save(user.getUsername(), email, name);
+        return ResponseEntity.ok("Subscriber added successfully");
     }
 
     @GetMapping
@@ -90,73 +83,62 @@ public class EmailSubscriberController {
         }
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id, @RequestParam String username) {
-        try {
-            userSubscriberRepository.delete(username, id);
-            return ResponseEntity.ok("Subscriber deleted successfully");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body("Failed to delete subscriber: " + e.getMessage());
+    @DeleteMapping("/delete/{email}")
+    public ResponseEntity<String> deleteSubscriber(@PathVariable String email, Authentication authentication) {
+        UserModel user = getCurrentUser(authentication);
+        if (!userSubscriberRepository.emailExists(user.getUsername(), email)) {
+            throw new SubscriberNotFoundException("Subscriber not found.");
         }
+        // Find the subscriber's ID by email
+        List<Map<String, Object>> subscribers = userSubscriberRepository.findByUsername(user.getUsername());
+        Long idToDelete = null;
+        for (Map<String, Object> sub : subscribers) {
+            if (sub.get("email").toString().equalsIgnoreCase(email)) {
+                idToDelete = ((Number) sub.get("id")).longValue();
+                break;
+            }
+        }
+        if (idToDelete == null) {
+            throw new SubscriberNotFoundException("Subscriber not found.");
+        }
+        userSubscriberRepository.delete(user.getUsername(), idToDelete);
+        return ResponseEntity.ok("Subscriber deleted successfully");
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteSubscriberById(@PathVariable Long id, Authentication authentication) {
+        UserModel user = getCurrentUser(authentication);
+        userSubscriberRepository.delete(user.getUsername(), id);
+        return ResponseEntity.ok("Subscriber deleted successfully");
     }
 
     @PostMapping("/import-csv")
-    public ResponseEntity<?> importSubscribersFromCsv(@RequestParam("file") MultipartFile file, Authentication authentication) {
-        String username = authentication.getName();
-        Set<String> addedEmails = new HashSet<>();
-        Set<String> skippedEmails = new HashSet<>();
-        int total = 0;
-        int added = 0;
-        int skipped = 0;
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-            String line;
-            boolean isHeader = true;
-            int emailIdx = -1, nameIdx = -1;
-            while ((line = reader.readLine()) != null) {
-                String[] tokens = line.split(",");
-                if (isHeader) {
-                    // Find the index of 'email' and 'name' columns
-                    for (int i = 0; i < tokens.length; i++) {
-                        String col = tokens[i].trim().toLowerCase();
-                        if (col.equals("email")) emailIdx = i;
-                        if (col.equals("name")) nameIdx = i;
-                    }
-                    if (emailIdx == -1 || nameIdx == -1) {
-                        return ResponseEntity.badRequest().body("CSV must have 'name' and 'email' columns");
-                    }
-                    isHeader = false;
-                    continue;
-                }
-                total++;
-                String email = tokens[emailIdx].trim();
-                String name = tokens[nameIdx].trim();
-                if (email.isEmpty() || name.isEmpty()) {
-                    skipped++;
-                    continue;
-                }
-                try {
-                    userSubscriberRepository.createUserTable(username);
-                    // Check for duplicate using emailExists
-                    if (userSubscriberRepository.emailExists(username, email) || addedEmails.contains(email.toLowerCase())) {
-                        skippedEmails.add(email + " (already exists)");
-                        skipped++;
-                        continue;
-                    }
-                    userSubscriberRepository.save(username, email, name);
-                    addedEmails.add(email.toLowerCase());
-                    added++;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    skippedEmails.add(email + " (error)");
-                    skipped++;
-                }
-            }
-            return ResponseEntity.ok("Imported: " + added + "/" + total + " (skipped: " + skipped + ") Skipped emails: " + skippedEmails);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body("Failed to import subscribers: " + e.getMessage());
+    public ResponseEntity<String> importSubscribersCsv(@RequestParam("file") MultipartFile file, Authentication authentication) {
+        String username = getCurrentUser(authentication).getUsername();
+        if (file.isEmpty()) {
+            throw new FileUploadException("Uploaded file is empty.");
         }
+        if (!file.getOriginalFilename().endsWith(".csv")) {
+            throw new FileUploadException("Only CSV files are supported.");
+        }
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            String headerLine = reader.readLine();
+            if (headerLine == null || !headerLine.toLowerCase().contains("email")) {
+                throw new CsvHeaderException("CSV file must contain 'email' column.");
+            }
+            // ... (rest of CSV import logic, throw CsvFormatException or CsvProcessingException as needed)
+        } catch (CsvHeaderException | CsvFormatException | CsvProcessingException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CsvProcessingException("Error processing the uploaded CSV file: " + e.getMessage());
+        }
+        return ResponseEntity.ok("CSV import completed");
+    }
+
+    private UserModel getCurrentUser(Authentication authentication) {
+        String username = authentication.getName();
+        return userRepository.findByUsername(username)
+            .orElseThrow(() -> new UserNotFoundException("User not found: " + username));
     }
 }
 

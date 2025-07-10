@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.HashMap;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,10 +27,14 @@ import com.project.email_usingJava.repository.UserRepository;
 import com.project.email_usingJava.service.EmailService;
 import com.project.email_usingJava.service.TemplateService;
 import com.project.email_usingJava.ServiceImpl.EmailServiceImpl;
+import com.project.email_usingJava.exception.*;
 
 import jakarta.mail.MessagingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 @RestController
 @RequestMapping("/api/emails")
@@ -50,23 +55,16 @@ public class EmailSenderController {
     @Autowired
     private TemplateService templateService;
 
+    @Autowired
+    private TemplateEngine templateEngine;
+
     private UserModel getCurrentUser(Authentication authentication) {
-        try {
-            // System.out.println("Authentication: " + authentication);
-            // System.out.println("Authentication name: " + (authentication != null ? authentication.getName() : "null"));
-            
-            if (authentication == null || authentication.getName() == null) {
-                throw new RuntimeException("Authentication is null or username is null");
-            }
-            
-            return userRepository.findByUsername(authentication.getName()).orElseThrow(
-                    () -> new RuntimeException("User not found: " + authentication.getName())
-            );
-        } catch (Exception e) {
-            // System.err.println("Error in getCurrentUser: " + e.getMessage());
-            // e.printStackTrace();
-            throw e;
+        if (authentication == null || authentication.getName() == null) {
+            throw new UnauthorizedException("Authentication is null or username is null");
         }
+        return userRepository.findByUsername(authentication.getName()).orElseThrow(
+                () -> new UserNotFoundException("User not found: " + authentication.getName())
+        );
     }
 
     @GetMapping("/templates")
@@ -75,9 +73,7 @@ public class EmailSenderController {
             List<TemplateService.TemplateInfo> templates = templateService.getAllTemplates();
             return ResponseEntity.ok(templates);
         } catch (Exception e) {
-            // System.err.println("Error getting templates: " + e.getMessage());
-            // e.printStackTrace();
-            return ResponseEntity.status(500).body(null);
+            throw new TemplateNotFoundException("Error getting templates: " + e.getMessage());
         }
     }
 
@@ -173,14 +169,13 @@ public class EmailSenderController {
             @RequestParam String subject,
             @RequestParam String body) {
         try {
-            // System.out.println("sendSimple called with to: " + to + ", subject: " + subject);
             UserModel user = getCurrentUser(authentication);
-            // System.out.println("User found: " + user.getUsername() + ", email: " + user.getEmail());
             emailService.sendSimpleEmail(user.getEmail(), user.getAppPassword(), to, subject, body);
+            // Increment sentEmails by 1
+            user.setSentEmails(user.getSentEmails() + 1);
+            userRepository.save(user);
             return ResponseEntity.ok("Simple email sent");
         } catch (Exception e) {
-            // System.err.println("Error in sendSimple: " + e.getMessage());
-            // e.printStackTrace();
             return ResponseEntity.status(500).body("Error sending email: " + e.getMessage());
         }
     }
@@ -194,9 +189,11 @@ public class EmailSenderController {
         int total = 0, success = 0, failed = 0;
         List<String> failedEmails = new ArrayList<>();
         try {
-            // System.out.println("sendSimpleToAll called with subject: " + subject);
             UserModel user = getCurrentUser(authentication);
             List<Map<String, Object>> subscribers = userSubscriberRepository.findByUsername(user.getUsername());
+            if (subscribers.isEmpty()) {
+                throw new NoSubscribersException("There are no subscribers to send email to.");
+            }
             total = subscribers.size();
             for (Map<String, Object> subscriber : subscribers) {
                 String email = (String) subscriber.get("email");
@@ -208,6 +205,9 @@ public class EmailSenderController {
                     failedEmails.add(email);
                 }
             }
+            // Increment sentEmails by number of successful sends
+            user.setSentEmails(user.getSentEmails() + success);
+            userRepository.save(user);
             long timeMs = System.currentTimeMillis() - start;
             return ResponseEntity.ok(Map.of(
                 "total", total,
@@ -216,10 +216,10 @@ public class EmailSenderController {
                 "failedEmails", failedEmails,
                 "timeMs", timeMs
             ));
+        } catch (NoSubscribersException e) {
+            throw e;
         } catch (Exception e) {
-            // System.err.println("Error in sendSimpleToAll: " + e.getMessage());
-            // e.printStackTrace();
-            return ResponseEntity.status(500).body("Error sending email to all: " + e.getMessage());
+            throw new EmailSendException("Error sending email to all: " + e.getMessage());
         }
     }
 
@@ -231,7 +231,6 @@ public class EmailSenderController {
             @RequestParam String body,
             @RequestParam("attachments") MultipartFile[] attachments) throws MessagingException {
         try {
-            // System.out.println("sendWithAttachment called with to: " + to + ", subject: " + subject);
             UserModel user = getCurrentUser(authentication);
             List<EmailServiceImpl.AttachmentDTO> attachmentDTOs = new ArrayList<>();
             if (attachments != null) {
@@ -244,10 +243,11 @@ public class EmailSenderController {
                 }
             }
             emailService.sendEmailWithAttachment(user.getEmail(), user.getAppPassword(), to, subject, body, attachmentDTOs);
+            // Increment sentEmails by 1
+            user.setSentEmails(user.getSentEmails() + 1);
+            userRepository.save(user);
             return ResponseEntity.ok("Email with attachment sent");
         } catch (Exception e) {
-            // System.err.println("Error in sendWithAttachment: " + e.getMessage());
-            // e.printStackTrace();
             return ResponseEntity.status(500).body("Error sending email with attachment: " + e.getMessage());
         }
     }
@@ -262,7 +262,6 @@ public class EmailSenderController {
         int total = 0, success = 0, failed = 0;
         List<String> failedEmails = new ArrayList<>();
         try {
-            // System.out.println("sendAttachmentToAll called with subject: " + subject);
             UserModel user = getCurrentUser(authentication);
             List<Map<String, Object>> subscribers = userSubscriberRepository.findByUsername(user.getUsername());
             total = subscribers.size();
@@ -286,6 +285,9 @@ public class EmailSenderController {
                     failedEmails.add(email);
                 }
             }
+            // Increment sentEmails by number of successful sends
+            user.setSentEmails(user.getSentEmails() + success);
+            userRepository.save(user);
             long timeMs = System.currentTimeMillis() - start;
             return ResponseEntity.ok(Map.of(
                 "total", total,
@@ -295,8 +297,6 @@ public class EmailSenderController {
                 "timeMs", timeMs
             ));
         } catch (Exception e) {
-            // System.err.println("Error in sendAttachmentToAll: " + e.getMessage());
-            // e.printStackTrace();
             return ResponseEntity.status(500).body("Error sending email with attachment to all: " + e.getMessage());
         }
     }
@@ -310,8 +310,6 @@ public class EmailSenderController {
             @RequestPart(required = false) MultipartFile[] attachments,
             @RequestBody Map<String, String> variables) throws Exception {
         try {
-            // System.out.println("sendTemplate called with to: " + to + ", subject: " + subject + ", template: " + templateName);
-            // Validate template exists
             if (!templateService.templateExists(templateName)) {
                 return ResponseEntity.badRequest().body("Template not found: " + templateName);
             }
@@ -327,10 +325,11 @@ public class EmailSenderController {
                 }
             }
             emailService.sendTemplateEmail(user.getEmail(), user.getAppPassword(), to, subject, templateName, variables, attachmentDTOs);
+            // Increment sentEmails by 1
+            user.setSentEmails(user.getSentEmails() + 1);
+            userRepository.save(user);
             return ResponseEntity.ok("Template email sent");
         } catch (Exception e) {
-            // System.err.println("Error in sendTemplate: " + e.getMessage());
-            // e.printStackTrace();
             return ResponseEntity.status(500).body("Error sending template email: " + e.getMessage());
         }
     }
@@ -348,8 +347,6 @@ public class EmailSenderController {
         AtomicInteger failed = new AtomicInteger(0);
         List<String> failedEmails = new ArrayList<>();
         try {
-            // System.out.println("sendTemplateToAll called with subject: " + subject + ", template: " + templateName);
-            // Validate template exists
             if (!templateService.templateExists(templateName)) {
                 return ResponseEntity.badRequest().body("Template not found: " + templateName);
             }
@@ -369,19 +366,58 @@ public class EmailSenderController {
             ArrayList<CompletableFuture<?>> futures = new ArrayList<>();
             for (Map<String, Object> subscriber : subscribers) {
                 String email = (String) subscriber.get("email");
+                String name = (String) subscriber.get("name");
                 futures.add(CompletableFuture.runAsync(() -> {
                     try {
-                        emailService.sendTemplateEmail(user.getEmail(), user.getAppPassword(), email, subject, templateName, variables, attachmentDTOs);
+                        Map<String, String> mergedVars = new HashMap<>(variables);
+                        
+                        // Auto-populate common variables from subscriber and user data
+                        mergedVars.put("receiverName", name);
+                        mergedVars.put("receiverEmail", email);
+                        mergedVars.put("senderName", user.getFullName());
+                        mergedVars.put("senderEmail", user.getEmail());
+                        
+                        // Auto-populate variables based on template configuration
+                        TemplateService.TemplateInfo templateInfo = templateService.getTemplate(templateName);
+                        if (templateInfo != null && templateInfo.getAutoPopulatedVariables() != null) {
+                            for (Map.Entry<String, String> entry : templateInfo.getAutoPopulatedVariables().entrySet()) {
+                                String variableName = entry.getKey();
+                                String source = entry.getValue();
+                                
+                                switch (source) {
+                                    case "subscriber.name":
+                                        mergedVars.put(variableName, name);
+                                        break;
+                                    case "subscriber.email":
+                                        mergedVars.put(variableName, email);
+                                        break;
+                                    case "user.fullName":
+                                        mergedVars.put(variableName, user.getFullName());
+                                        break;
+                                    case "user.email":
+                                        mergedVars.put(variableName, user.getEmail());
+                                        break;
+                                    case "user.phone":
+                                        if (user.getPhone() != null) {
+                                            mergedVars.put(variableName, user.getPhone());
+                                        }
+                                        break;
+                                }
+                            }
+                        }
+                        
+                        emailService.sendTemplateEmail(user.getEmail(), user.getAppPassword(), email, subject, templateName, mergedVars, attachmentDTOs);
                         success.incrementAndGet();
                     } catch (Exception e) {
                         failed.incrementAndGet();
                         synchronized (failedEmails) { failedEmails.add(email); }
-                        // System.err.println("Error sending template email to " + email + ": " + e.getMessage());
-                        // e.printStackTrace();
                     }
                 }));
             }
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            // Increment sentEmails by number of successful sends
+            user.setSentEmails(user.getSentEmails() + success.get());
+            userRepository.save(user);
             long timeMs = System.currentTimeMillis() - start;
             return ResponseEntity.ok(Map.of(
                 "total", total,
@@ -391,9 +427,63 @@ public class EmailSenderController {
                 "timeMs", timeMs
             ));
         } catch (Exception e) {
-            // System.err.println("Error in sendTemplateToAll: " + e.getMessage());
-            // e.printStackTrace();
-            return ResponseEntity.status(500).body("Error sending template email to all: " + e.getMessage());
+            return ResponseEntity.status(500).body("Error in sendTemplateToAll: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Live preview: Render a template with sample data for previewing in the frontend.
+     */
+    @GetMapping(value = "/templates/{templateName}/render", produces = MediaType.TEXT_HTML_VALUE)
+    public ResponseEntity<String> renderTemplatePreview(@PathVariable String templateName) {
+        try {
+            System.out.println("[PREVIEW] Attempting to render template: '" + templateName + "'");
+            TemplateService.TemplateInfo template = templateService.getTemplate(templateName);
+            if (template == null) {
+                System.err.println("[PREVIEW] Template not found in TemplateService: '" + templateName + "'");
+                return ResponseEntity.status(404).body("Template not found: " + templateName);
+            }
+            // Build sample variables map
+            Map<String, Object> sampleVars = new java.util.HashMap<>();
+            for (String var : template.getVariables()) {
+                sampleVars.put(var, var.substring(0, 1).toUpperCase() + var.substring(1) + " Sample");
+            }
+            // Add some common sample values for known variables
+            if (sampleVars.containsKey("name")) sampleVars.put("name", "John Doe");
+            if (sampleVars.containsKey("company")) sampleVars.put("company", "Acme Corp");
+            if (sampleVars.containsKey("website")) sampleVars.put("website", "https://acme.com");
+            if (sampleVars.containsKey("supportEmail")) sampleVars.put("supportEmail", "support@acme.com");
+            if (sampleVars.containsKey("date")) sampleVars.put("date", "April 1, 2025");
+            if (sampleVars.containsKey("discountPercent")) sampleVars.put("discountPercent", "20");
+            if (sampleVars.containsKey("offerDescription")) sampleVars.put("offerDescription", "Spring Sale");
+            if (sampleVars.containsKey("promoCode")) sampleVars.put("promoCode", "SPRING2025");
+            if (sampleVars.containsKey("ctaLink")) sampleVars.put("ctaLink", "https://acme.com/deals");
+            if (sampleVars.containsKey("expiryDate")) sampleVars.put("expiryDate", "April 30, 2025");
+            if (sampleVars.containsKey("highlight1")) sampleVars.put("highlight1", "Feature One");
+            if (sampleVars.containsKey("highlight2")) sampleVars.put("highlight2", "Feature Two");
+            if (sampleVars.containsKey("highlight3")) sampleVars.put("highlight3", "Feature Three");
+            if (sampleVars.containsKey("newsContent")) sampleVars.put("newsContent", "Latest news and updates here.");
+            if (sampleVars.containsKey("proTip")) sampleVars.put("proTip", "Try our new dashboard!");
+            if (sampleVars.containsKey("unsubscribeLink")) sampleVars.put("unsubscribeLink", "https://acme.com/unsubscribe");
+            // Render with Thymeleaf
+            org.thymeleaf.context.Context context = new org.thymeleaf.context.Context();
+            for (Map.Entry<String, Object> entry : sampleVars.entrySet()) {
+                context.setVariable(entry.getKey(), entry.getValue());
+            }
+            // Log the template file existence in resources
+            String resourcePath = "/templates/" + templateName + ".html";
+            java.net.URL resourceUrl = getClass().getResource(resourcePath);
+            if (resourceUrl == null) {
+                System.err.println("[PREVIEW] Template file not found in resources: '" + resourcePath + "'");
+            } else {
+                System.out.println("[PREVIEW] Template file found at: " + resourceUrl);
+            }
+            String html = templateEngine.process(templateName, context);
+            return ResponseEntity.ok(html);
+        } catch (Exception e) {
+            System.err.println("[PREVIEW] Error rendering template: " + templateName);
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error rendering template: " + e.getMessage());
         }
     }
 }

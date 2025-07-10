@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from '../api';
 import { getToken } from "../App";
 
-const TemplateSelector = ({ value, onChange, onTemplateSelect }) => {
+const TemplateSelector = ({ value, onChange, onTemplateSelect, hideGallery }) => {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -103,14 +103,12 @@ const TemplateSelector = ({ value, onChange, onTemplateSelect }) => {
         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
           <h3 className="font-semibold text-lg mb-2">{selectedTemplate.displayName}</h3>
           <p className="text-gray-600 mb-3">{selectedTemplate.description}</p>
-
           <div className="mb-3">
             <h4 className="font-medium mb-1">Preview:</h4>
             <div className="bg-white p-3 rounded border text-sm">
               {selectedTemplate.preview}
             </div>
         </div>
-
           <div>
             <h4 className="font-medium mb-1">Available Variables:</h4>
             <div className="flex flex-wrap gap-2">
@@ -127,7 +125,8 @@ const TemplateSelector = ({ value, onChange, onTemplateSelect }) => {
         </div>
       )}
 
-      {/* Template Gallery */}
+    {/* Template Gallery (hide if hideGallery) */}
+    {!hideGallery && (
       <div className="max-w-4xl mx-auto bg-white p-4 sm:p-6 rounded shadow">
         <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Available Templates</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
@@ -152,6 +151,7 @@ const TemplateSelector = ({ value, onChange, onTemplateSelect }) => {
           ))}
       </div>
     </div>
+    )}
   </>
 );
 };

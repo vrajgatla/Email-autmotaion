@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import TemplateSelector from "../EmailSender/TemplateSelector";
 import { getToken } from "../App";
 import api from '../api';
+import BackButton from './Common/BackButton';
+import { Link } from 'react-router-dom';
+import LiveHtmlPreviewModal from '../EmailSender/LiveHtmlPreviewSidebar';
 
 const EmailTemplates = () => {
   const [templates, setTemplates] = useState([]);
@@ -9,6 +12,10 @@ const EmailTemplates = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectorValue, setSelectorValue] = useState("");
+  const [showLivePreview, setShowLivePreview] = useState(false);
+  const [livePreviewHtml, setLivePreviewHtml] = useState("");
+  const [livePreviewLoading, setLivePreviewLoading] = useState(false);
+  const [livePreviewError, setLivePreviewError] = useState(null);
 
   useEffect(() => {
     fetchTemplates();
@@ -41,8 +48,27 @@ const EmailTemplates = () => {
     }
   };
 
+  const handleShowLivePreview = async (templateName) => {
+    setLivePreviewLoading(true);
+    setLivePreviewError(null);
+    setShowLivePreview(true);
+    try {
+      const token = getToken();
+      const res = await api.get(`/api/emails/templates/${templateName}/render`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setLivePreviewHtml(res.data);
+    } catch (err) {
+      setLivePreviewError("Failed to load live preview");
+      setLivePreviewHtml("");
+    } finally {
+      setLivePreviewLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+      <div className="mb-4"><BackButton /></div>
       <h1 className="text-3xl font-bold mb-6">Email Templates</h1>
       <p className="mb-4">
         Here are the templates you can use in your emails. Choose a template name in the send email form.
@@ -51,8 +77,9 @@ const EmailTemplates = () => {
       <div className="mb-8">
         <TemplateSelector
           value={selectorValue}
-          onChange={e => setSelectorValue(e.target)}
+          onChange={e => setSelectorValue(e.target.value)}
           onTemplateSelect={setSelectedTemplate}
+          hideGallery={true}
         />
       </div>
       {/* Full Template Gallery */}
@@ -63,7 +90,11 @@ const EmailTemplates = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {templates.map((template) => (
-            <div key={template.name} className="border rounded p-4 hover:shadow-md transition-shadow">
+            <div
+              key={template.name}
+              className="border rounded p-4 hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handleShowLivePreview(template.name)}
+            >
               <h3 className="font-semibold mb-2">{template.displayName}</h3>
               <p className="text-sm text-gray-600 mb-3">{template.description}</p>
               <div className="text-sm mb-2">
@@ -83,10 +114,22 @@ const EmailTemplates = () => {
                 <strong>Preview:</strong>
                 <div>{template.preview}</div>
               </div>
+              <div className="flex gap-2 mt-2">
+                <span className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm font-medium shadow cursor-pointer">
+                  View Live
+                </span>
+              </div>
             </div>
           ))}
         </div>
       )}
+      <LiveHtmlPreviewModal
+        open={showLivePreview}
+        onClose={() => setShowLivePreview(false)}
+        html={livePreviewHtml}
+        loading={livePreviewLoading}
+        error={livePreviewError}
+      />
     </div>
   );
 };

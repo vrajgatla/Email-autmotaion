@@ -1,7 +1,8 @@
 // src/pages/Login.jsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import api from '../api';
+import BackButton from '../Components/Common/BackButton';
 
 const Login = ({ saveToken }) => {
   const [email, setEmail] = useState("");
@@ -49,30 +50,43 @@ const Login = ({ saveToken }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-6 sm:mt-10 bg-white p-4 sm:p-8 rounded shadow">
-      <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Login</h2>
-      {error && <p className="text-red-500 mb-4">{error}</p>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="email"
-          className="w-full border p-2 rounded"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          className="w-full border p-2 rounded"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
-          Login
-        </button>
-      </form>
+    <div className="min-h-[80vh] flex flex-col items-center justify-center bg-[#f8f9fa] px-2 py-8">
+      <div className="w-full max-w-2xl flex justify-start mb-2"><BackButton /></div>
+      <div className="w-full max-w-sm bg-white rounded-2xl shadow-lg p-6 sm:p-8 flex flex-col">
+        <h2 className="text-2xl sm:text-3xl font-bold mb-6 text-left">Login</h2>
+        {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1" htmlFor="email">Email Address</label>
+            <input
+              id="email"
+              type="email"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1" htmlFor="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-md font-semibold text-base hover:bg-blue-700 transition">Log in</button>
+        </form>
+        <div className="mt-4 text-center text-sm text-gray-600">
+          Don't have an account?{' '}
+          <Link to="/signup" className="text-blue-600 hover:underline font-medium">Sign up</Link>
+        </div>
+      </div>
     </div>
   );
 };

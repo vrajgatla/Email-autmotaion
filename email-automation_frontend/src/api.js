@@ -11,9 +11,13 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('auth_token');
-    console.log('Interceptor token:', token); // Debug log
+    // console.log('Interceptor token:', token); // Debug log
     if (token) {
+      console.log("Interceptor token: [HIDDEN] (length:", token.length, ")");
+      config.headers = config.headers || {};
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.log("Interceptor token: null");
     }
     return config;
   },
