@@ -6,6 +6,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.HashMap;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -124,7 +126,7 @@ public class EmailSenderController {
                             "App Password Length: " + (user.getAppPassword() != null ? user.getAppPassword().length() : 0) + "\n\n" +
                             "If you receive this email, the system is working properly!";
             
-            emailService.sendSimpleEmail(user.getEmail(), user.getAppPassword(), user.getEmail(), testSubject, testBody);
+            emailService.sendSimpleEmail(user.getEmail(), user.getDecryptedAppPassword(), user.getEmail(), testSubject, testBody);
             
             return ResponseEntity.ok("Test email sent successfully to " + user.getEmail());
             
@@ -170,11 +172,12 @@ public class EmailSenderController {
             @RequestParam String body) {
         try {
             UserModel user = getCurrentUser(authentication);
-            emailService.sendSimpleEmail(user.getEmail(), user.getAppPassword(), to, subject, body);
+            // For single emails, use synchronous sending for immediate feedback
+            emailService.sendSimpleEmail(user.getEmail(), user.getDecryptedAppPassword(), to, subject, body);
             // Increment sentEmails by 1
             user.setSentEmails(user.getSentEmails() + 1);
             userRepository.save(user);
-            return ResponseEntity.ok("Simple email sent");
+            return ResponseEntity.ok("Simple email sent successfully");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error sending email: " + e.getMessage());
         }
@@ -195,16 +198,35 @@ public class EmailSenderController {
                 throw new NoSubscribersException("There are no subscribers to send email to.");
             }
             total = subscribers.size();
+            
+            // For bulk emails, use async processing with proper error handling
+            List<CompletableFuture<Boolean>> futures = new ArrayList<>();
+            
             for (Map<String, Object> subscriber : subscribers) {
                 String email = (String) subscriber.get("email");
-                try {
-                    emailService.sendSimpleEmail(user.getEmail(), user.getAppPassword(), email, subject, body);
+                CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        emailService.sendSimpleEmail(user.getEmail(), user.getDecryptedAppPassword(), email, subject, body);
+                        return true; // Success
+                    } catch (Exception e) {
+                        synchronized (failedEmails) {
+                            failedEmails.add(email);
+                        }
+                        return false; // Failed
+                    }
+                });
+                futures.add(future);
+            }
+            
+            // Wait for all emails to complete and count results
+            for (CompletableFuture<Boolean> future : futures) {
+                if (future.get()) {
                     success++;
-                } catch (Exception e) {
+                } else {
                     failed++;
-                    failedEmails.add(email);
                 }
             }
+            
             // Increment sentEmails by number of successful sends
             user.setSentEmails(user.getSentEmails() + success);
             userRepository.save(user);
@@ -214,7 +236,8 @@ public class EmailSenderController {
                 "success", success,
                 "failed", failed,
                 "failedEmails", failedEmails,
-                "timeMs", timeMs
+                "timeMs", timeMs,
+                "message", String.format("Bulk email completed. %d sent, %d failed in %dms", success, failed, timeMs)
             ));
         } catch (NoSubscribersException e) {
             throw e;
@@ -242,11 +265,12 @@ public class EmailSenderController {
                     ));
                 }
             }
-            emailService.sendEmailWithAttachment(user.getEmail(), user.getAppPassword(), to, subject, body, attachmentDTOs);
+            // For single emails, use synchronous sending for immediate feedback
+            emailService.sendEmailWithAttachment(user.getEmail(), user.getDecryptedAppPassword(), to, subject, body, attachmentDTOs);
             // Increment sentEmails by 1
             user.setSentEmails(user.getSentEmails() + 1);
             userRepository.save(user);
-            return ResponseEntity.ok("Email with attachment sent");
+            return ResponseEntity.ok("Email with attachment sent successfully");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error sending email with attachment: " + e.getMessage());
         }
@@ -275,16 +299,35 @@ public class EmailSenderController {
                     ));
                 }
             }
+            
+            // For bulk emails, use async processing with proper error handling
+            List<CompletableFuture<Boolean>> futures = new ArrayList<>();
+            
             for (Map<String, Object> subscriber : subscribers) {
                 String email = (String) subscriber.get("email");
-                try {
-                    emailService.sendEmailWithAttachment(user.getEmail(), user.getAppPassword(), email, subject, body, attachmentDTOs);
+                CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+                    try {
+                        emailService.sendEmailWithAttachment(user.getEmail(), user.getDecryptedAppPassword(), email, subject, body, attachmentDTOs);
+                        return true; // Success
+                    } catch (Exception e) {
+                        synchronized (failedEmails) {
+                            failedEmails.add(email);
+                        }
+                        return false; // Failed
+                    }
+                });
+                futures.add(future);
+            }
+            
+            // Wait for all emails to complete and count results
+            for (CompletableFuture<Boolean> future : futures) {
+                if (future.get()) {
                     success++;
-                } catch (Exception e) {
+                } else {
                     failed++;
-                    failedEmails.add(email);
                 }
             }
+            
             // Increment sentEmails by number of successful sends
             user.setSentEmails(user.getSentEmails() + success);
             userRepository.save(user);
@@ -294,7 +337,8 @@ public class EmailSenderController {
                 "success", success,
                 "failed", failed,
                 "failedEmails", failedEmails,
-                "timeMs", timeMs
+                "timeMs", timeMs,
+                "message", String.format("Bulk email with attachments completed. %d sent, %d failed in %dms", success, failed, timeMs)
             ));
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error sending email with attachment to all: " + e.getMessage());
@@ -324,11 +368,11 @@ public class EmailSenderController {
                     ));
                 }
             }
-            emailService.sendTemplateEmail(user.getEmail(), user.getAppPassword(), to, subject, templateName, variables, attachmentDTOs);
+            emailService.sendTemplateEmail(user.getEmail(), user.getDecryptedAppPassword(), to, subject, templateName, variables, attachmentDTOs);
             // Increment sentEmails by 1
             user.setSentEmails(user.getSentEmails() + 1);
             userRepository.save(user);
-            return ResponseEntity.ok("Template email sent");
+            return ResponseEntity.ok("Template email sent successfully");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error sending template email: " + e.getMessage());
         }
@@ -340,7 +384,7 @@ public class EmailSenderController {
             @RequestParam String subject,
             @RequestParam String templateName,
             @RequestPart(required = false) MultipartFile[] attachments,
-            @RequestBody Map<String, String> variables) throws Exception {
+            @RequestParam(required = false) String variables) throws Exception {
         long start = System.currentTimeMillis();
         int total = 0;
         AtomicInteger success = new AtomicInteger(0);
@@ -363,13 +407,27 @@ public class EmailSenderController {
                     ));
                 }
             }
+            
+            // Parse variables from JSON string
+            final Map<String, String> variablesMap = new HashMap<>();
+            if (variables != null && !variables.isEmpty()) {
+                try {
+                    ObjectMapper mapper = new ObjectMapper();
+                    Map<String, String> parsedVars = mapper.readValue(variables, new TypeReference<Map<String, String>>() {});
+                    variablesMap.putAll(parsedVars);
+                } catch (Exception e) {
+                    logger.error("Error parsing variables JSON: " + e.getMessage());
+                    return ResponseEntity.badRequest().body("Invalid variables format");
+                }
+            }
+            
             ArrayList<CompletableFuture<?>> futures = new ArrayList<>();
             for (Map<String, Object> subscriber : subscribers) {
                 String email = (String) subscriber.get("email");
                 String name = (String) subscriber.get("name");
                 futures.add(CompletableFuture.runAsync(() -> {
                     try {
-                        Map<String, String> mergedVars = new HashMap<>(variables);
+                        Map<String, String> mergedVars = new HashMap<>(variablesMap);
                         
                         // Auto-populate common variables from subscriber and user data
                         mergedVars.put("receiverName", name);
@@ -406,7 +464,7 @@ public class EmailSenderController {
                             }
                         }
                         
-                        emailService.sendTemplateEmail(user.getEmail(), user.getAppPassword(), email, subject, templateName, mergedVars, attachmentDTOs);
+                        emailService.sendTemplateEmail(user.getEmail(), user.getDecryptedAppPassword(), email, subject, templateName, mergedVars, attachmentDTOs);
                         success.incrementAndGet();
                     } catch (Exception e) {
                         failed.incrementAndGet();

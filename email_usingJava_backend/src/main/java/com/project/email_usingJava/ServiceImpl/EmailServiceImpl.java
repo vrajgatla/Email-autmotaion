@@ -76,7 +76,6 @@ public class EmailServiceImpl implements EmailService {
 	}
 
     @Override
-    @Async
     public void sendSimpleEmail(String from, String password, String to, String subject, String body) {
         try {
             // System.out.println("Attempting to send simple email:");
@@ -114,7 +113,6 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    @Async
     public void sendEmailWithAttachment(String from, String password, String to, String subject, String body, List<AttachmentDTO> attachments) throws MessagingException {
         try {
             // System.out.println("Attempting to send email with attachment:");
@@ -169,7 +167,6 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    @Async
     public void sendTemplateEmail(String from, String password, String to, String subject, String templateName, Map<String, String> variables, List<AttachmentDTO> attachments) throws Exception {
         try {
             System.out.println("=== TEMPLATE EMAIL DEBUG ===");

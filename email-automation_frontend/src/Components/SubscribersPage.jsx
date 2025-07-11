@@ -34,7 +34,7 @@ const SubscribersPage = () => {
       return;
     }
     try {
-      await api.post(`/api/subscribers`, form, { params: { username } });
+      await api.post(`/api/subscribers/add`, form, { params: { username } });
       setForm({ name: "", email: "" });
       setStatus("Subscriber added!");
       setError("");
@@ -80,7 +80,10 @@ const SubscribersPage = () => {
     try {
       const formData = new FormData();
       formData.append("file", csvFile);
-      const res = await api.post(`/api/subscribers/import-csv`, formData, { headers: { "Content-Type": "multipart/form-data" } });
+      const res = await api.post(`/api/subscribers/import-csv`, formData, { 
+        headers: { "Content-Type": "multipart/form-data" },
+        params: { username }
+      });
       setCsvStatus(res.data);
       setCsvFile(null);
       fetchSubscribers();
@@ -92,6 +95,27 @@ const SubscribersPage = () => {
         errorMessage = error.response.data;
       }
       setCsvStatus(errorMessage);
+    }
+  };
+
+  const handleDeleteAll = async () => {
+    if (!window.confirm("Are you sure you want to delete ALL subscribers? This action cannot be undone.")) {
+      return;
+    }
+    
+    try {
+      await api.delete(`/api/subscribers/delete-all`, { params: { username } });
+      setStatus("All subscribers deleted successfully!");
+      setError("");
+      fetchSubscribers();
+    } catch (error) {
+      let errorMessage = "Failed to delete all subscribers";
+      if (error.response && error.response.data && error.response.data.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response && typeof error.response.data === 'string') {
+        errorMessage = error.response.data;
+      }
+      setStatus(errorMessage);
     }
   };
 
@@ -146,6 +170,17 @@ const SubscribersPage = () => {
 
       {csvStatus && <p className="mt-2 text-sm font-semibold">{csvStatus}</p>}
       {status && <p className="mb-2 sm:mb-4 font-semibold">{status}</p>}
+
+      {subscribers.length > 0 && (
+        <div className="mb-4 sm:mb-6">
+          <button
+            onClick={handleDeleteAll}
+            className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+          >
+            Delete All Subscribers ({subscribers.length})
+          </button>
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full min-w-[500px] border-collapse border border-gray-300 text-xs sm:text-sm">

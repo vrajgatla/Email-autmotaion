@@ -94,4 +94,17 @@ public class UserSubscriberRepository {
             return 0;
         }
     }
+    
+    public void deleteAllByUsername(String username) {
+        String tableName = dynamicTableService.getUserTableName(username);
+        String sql = "DELETE FROM " + tableName;
+        
+        try {
+            jdbcTemplate.update(sql);
+            System.out.println("All subscribers deleted for user: " + username);
+        } catch (Exception e) {
+            System.err.println("Error deleting all subscribers for user " + username + ": " + e.getMessage());
+            throw e;
+        }
+    }
 } 
